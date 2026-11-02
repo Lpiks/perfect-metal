@@ -11,29 +11,62 @@ import {
   RotateCcw,
   Sparkles,
   Info,
+  BookOpen,
+  Star,
+  CheckCircle2,
 } from 'lucide-react'
 import { useERPStore } from '../../store/erpStore'
 import { BpcColor, BpcTexture, SlatType, MotorType } from '../../types/shutter'
 import { SLAT_CATALOG } from '../../utils/shutterMath'
 import { formatDZD } from '../../utils/currency'
+import {
+  BPC_MASTER_CATALOG,
+  BpcMasterColor,
+  BPC_COLOR_FAMILIES,
+} from '../../utils/bpcMasterCatalog'
 import { CustomModal } from '../ui/CustomModal'
-import { CustomInput } from '../ui/CustomInput'
-import { CustomSelect } from '../ui/CustomSelect'
 
-const TEXTURE_LABELS: Record<BpcTexture, { label: string; badgeClass: string }> = {
-  sable: { label: 'Sablé / Texturé (TX)', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
-  mat: { label: 'Mat Profond (M)', badgeClass: 'bg-slate-700/40 text-slate-300 border-slate-600/40' },
-  brillant: { label: 'Brillant 85% (G)', badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
-  satine: { label: 'Satiné 60% (S)', badgeClass: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' },
-  martele: { label: 'Martelé / Effet Rouille', badgeClass: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
-  metallise: { label: 'Bonded Métallisé (BM)', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+const TEXTURE_CONFIG: Record<
+  BpcTexture,
+  { label: string; short: string; badgeClass: string; defaultSurchargeDzd: number }
+> = {
+  sable: {
+    label: 'Sablé / Texturé Fin (TX)',
+    short: 'Sablé',
+    badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    defaultSurchargeDzd: 300,
+  },
+  mat: {
+    label: 'Mat Profond 25-30% (M)',
+    short: 'Mat',
+    badgeClass: 'bg-slate-700/40 text-slate-300 border-slate-600/40',
+    defaultSurchargeDzd: 0,
+  },
+  brillant: {
+    label: 'Brillant 85% (G)',
+    short: 'Brillant',
+    badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
+    defaultSurchargeDzd: 0,
+  },
+  satine: {
+    label: 'Satiné 60% (S)',
+    short: 'Satiné',
+    badgeClass: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+    defaultSurchargeDzd: 0,
+  },
+  metallise: {
+    label: 'Bonded Métallisé (BM)',
+    short: 'Métallisé',
+    badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    defaultSurchargeDzd: 600,
+  },
+  martele: {
+    label: 'Martelé / Effet Rouille',
+    short: 'Martelé',
+    badgeClass: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
+    defaultSurchargeDzd: 800,
+  },
 }
-
-const PRESET_HEX_COLORS = [
-  '#2E353B', '#383E42', '#141416', '#101113', '#F8FAFC', '#F1F5F9',
-  '#4A3A2C', '#E3D4B6', '#CBD5E1', '#1D4ED8', '#DC2626', '#166534',
-  '#94A3B8', '#78350F', '#1E293B', '#64748B', '#000000', '#FFFFFF'
-]
 
 export const PricingManagerView: React.FC = () => {
   const {
@@ -48,95 +81,117 @@ export const PricingManagerView: React.FC = () => {
     resetPricingToDefaults,
   } = useERPStore()
 
-  // Tabs: 'colors' | 'slats' | 'motors'
+  // Onglets : 'colors' | 'slats' | 'motors'
   const [activeTab, setActiveTab] = useState<'colors' | 'slats' | 'motors'>('colors')
 
-  // Search & Filters for Colors
+  // Filtres du nuancier actif
   const [searchQuery, setSearchQuery] = useState('')
   const [textureFilter, setTextureFilter] = useState<string>('all')
 
-  // Notification de sauvegarde temporaire
+  // Toast de notification temporaire
   const [saveNotice, setSaveNotice] = useState<string | null>(null)
-
   const showSaveNotice = (message: string) => {
     setSaveNotice(message)
     setTimeout(() => setSaveNotice(null), 2500)
   }
 
-  // Modal State for adding/editing BPC color
+  // État du Modal "Cahier de Couleur BPC"
   const [isColorModalOpen, setIsColorModalOpen] = useState(false)
   const [editingColor, setEditingColor] = useState<BpcColor | null>(null)
 
-  // Color Form State
-  const [formCode, setFormCode] = useState('')
-  const [formRal, setFormRal] = useState('')
-  const [formName, setFormName] = useState('')
-  const [formHex, setFormHex] = useState('#2E353B')
+  // Filtres & sélection dans le Cahier Maître BPC
+  const [bookletFamily, setBookletFamily] = useState<string>('Toutes les familles')
+  const [bookletSearch, setBookletSearch] = useState('')
+  const [selectedMasterColor, setSelectedMasterColor] = useState<BpcMasterColor>(
+    BPC_MASTER_CATALOG[0]
+  )
+
+  // Options pour la teinte à ajouter ou éditer
   const [formTexture, setFormTexture] = useState<BpcTexture>('sable')
-  const [formSeries, setFormSeries] = useState('BPCOAT-PE (Qualicoat)')
   const [formPriceM2, setFormPriceM2] = useState<number>(300)
   const [formInStock, setFormInStock] = useState(true)
+  const [formCustomName, setFormCustomName] = useState('')
 
-  const openAddColorModal = () => {
+  // Ouvrir le Cahier de Couleur BPC pour ajouter une teinte certifiée
+  const openBookletModal = () => {
     setEditingColor(null)
-    setFormCode('BPC ')
-    setFormRal('7016')
-    setFormName('')
-    setFormHex('#2E353B')
+    setBookletFamily('Toutes les familles')
+    setBookletSearch('')
+    const defaultColor = BPC_MASTER_CATALOG[0]
+    setSelectedMasterColor(defaultColor)
+    setFormCustomName(defaultColor.standardName)
     setFormTexture('sable')
-    setFormSeries('BPCOAT-PE (Qualicoat)')
-    setFormPriceM2(300)
+    setFormPriceM2(TEXTURE_CONFIG.sable.defaultSurchargeDzd)
     setFormInStock(true)
     setIsColorModalOpen(true)
   }
 
+  // Ouvrir en mode édition d'une teinte déjà au catalogue
   const openEditColorModal = (color: BpcColor) => {
     setEditingColor(color)
-    setFormCode(color.code)
-    setFormRal(color.ralReference)
-    setFormName(color.name)
-    setFormHex(color.hex)
+    const matchingMaster =
+      BPC_MASTER_CATALOG.find((m) => m.ralCode === color.ralReference) || BPC_MASTER_CATALOG[0]
+    setSelectedMasterColor(matchingMaster)
+    setFormCustomName(color.name)
     setFormTexture(color.texture)
-    setFormSeries(color.series || 'BPCOAT-PE')
     setFormPriceM2(color.pricePerM2Dzd)
     setFormInStock(color.inStock)
     setIsColorModalOpen(true)
   }
 
+  // Changement de texture ➔ mise à jour de la plus-value suggérée
+  const handleTextureSelect = (tex: BpcTexture) => {
+    setFormTexture(tex)
+    setFormPriceM2(TEXTURE_CONFIG[tex].defaultSurchargeDzd)
+  }
+
+  // Clic sur une couleur du cahier maître
+  const handleSelectMaster = (master: BpcMasterColor) => {
+    setSelectedMasterColor(master)
+    setFormCustomName(master.standardName)
+  }
+
+  // Validation : enregistrement dans le catalogue actif
   const handleSaveColor = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formCode.trim()) return
+
+    const textureInfo = TEXTURE_CONFIG[formTexture]
+    const code = editingColor
+      ? editingColor.code
+      : `BPC ${selectedMasterColor.ralCode} ${textureInfo.short}`
+    const series =
+      selectedMasterColor.recommendedSeries ||
+      (formTexture === 'metallise' || formTexture === 'martele'
+        ? 'BPCOAT-BM (Spécial)'
+        : 'BPCOAT-PE (Qualicoat)')
 
     if (editingColor) {
       updateBpcColor(editingColor.id, {
-        code: formCode.trim(),
-        ralReference: formRal.trim(),
-        name: formName.trim() || formCode.trim(),
-        hex: formHex,
+        name: formCustomName.trim() || editingColor.name,
         texture: formTexture,
-        series: formSeries,
         pricePerM2Dzd: Number(formPriceM2) || 0,
         inStock: formInStock,
       })
-      showSaveNotice(`Teinte "${formCode}" mise à jour avec succès`)
+      showSaveNotice(`Teinte "${editingColor.code}" mise à jour avec succès`)
     } else {
       addBpcColor({
-        code: formCode.trim(),
-        ralReference: formRal.trim(),
-        name: formName.trim() || formCode.trim(),
-        hex: formHex,
+        code,
+        ralReference: selectedMasterColor.ralCode,
+        name: formCustomName.trim() || `${selectedMasterColor.standardName} (${textureInfo.short})`,
+        hex: selectedMasterColor.hex,
         texture: formTexture,
-        series: formSeries,
+        series,
         pricePerM2Dzd: Number(formPriceM2) || 0,
         inStock: formInStock,
+        isPopular: selectedMasterColor.popularInAlgeria,
       })
-      showSaveNotice(`Nouvelle teinte BPC "${formCode}" ajoutée au catalogue`)
+      showSaveNotice(`Teinte "${code}" activée depuis le Cahier BPC`)
     }
 
     setIsColorModalOpen(false)
   }
 
-  // Filtered colors
+  // Teintes actives filtrées
   const filteredColors = useMemo(() => {
     return bpcColors.filter((c) => {
       const matchesSearch =
@@ -147,6 +202,18 @@ export const PricingManagerView: React.FC = () => {
       return matchesSearch && matchesTexture
     })
   }, [bpcColors, searchQuery, textureFilter])
+
+  // Teintes du Cahier Maître filtrées
+  const filteredMasterColors = useMemo(() => {
+    return BPC_MASTER_CATALOG.filter((m) => {
+      const matchesSearch =
+        m.ralCode.toLowerCase().includes(bookletSearch.toLowerCase()) ||
+        m.standardName.toLowerCase().includes(bookletSearch.toLowerCase())
+      const matchesFamily =
+        bookletFamily === 'Toutes les familles' || m.family === bookletFamily
+      return matchesSearch && matchesFamily
+    })
+  }, [bookletSearch, bookletFamily])
 
   return (
     <div className="space-y-6">
@@ -174,7 +241,11 @@ export const PricingManagerView: React.FC = () => {
           <button
             type="button"
             onClick={() => {
-              if (window.confirm('Voulez-vous réinitialiser tous les prix et couleurs aux valeurs catalogue usine ?')) {
+              if (
+                window.confirm(
+                  'Voulez-vous réinitialiser tous les prix et couleurs aux valeurs catalogue usine ?'
+                )
+              ) {
                 resetPricingToDefaults()
                 showSaveNotice('Tarifs et catalogue BPC réinitialisés aux valeurs usine.')
               }
@@ -189,11 +260,11 @@ export const PricingManagerView: React.FC = () => {
           {activeTab === 'colors' && (
             <button
               type="button"
-              onClick={openAddColorModal}
+              onClick={openBookletModal}
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white shadow-lg shadow-sky-500/20 transition-all cursor-pointer"
             >
-              <Plus size={16} />
-              <span>+ Ajouter Teinte BPC</span>
+              <BookOpen size={16} />
+              <span>Ouvrir Cahier de Couleur BPC</span>
             </button>
           )}
         </div>
@@ -224,7 +295,7 @@ export const PricingManagerView: React.FC = () => {
           }`}
         >
           <Palette size={15} />
-          <span>Nuancier & Teintes BPC ({bpcColors.length})</span>
+          <span>Nuancier & Teintes BPC Actives ({bpcColors.length})</span>
         </button>
 
         <button
@@ -296,10 +367,10 @@ export const PricingManagerView: React.FC = () => {
             </div>
           </div>
 
-          {/* Grille des Couleurs BPC */}
+          {/* Grille des Couleurs BPC Actives */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
             {filteredColors.map((color) => {
-              const textureInfo = TEXTURE_LABELS[color.texture] || TEXTURE_LABELS.sable
+              const textureInfo = TEXTURE_CONFIG[color.texture] || TEXTURE_CONFIG.sable
 
               return (
                 <div
@@ -313,7 +384,6 @@ export const PricingManagerView: React.FC = () => {
                       className="w-12 h-12 rounded-xl shadow-inner border border-white/20 shrink-0 relative flex items-center justify-center overflow-hidden"
                       style={{ backgroundColor: color.hex }}
                     >
-                      {/* Motif de texture fine pour les sablés */}
                       {color.texture === 'sable' && (
                         <div
                           className="absolute inset-0 opacity-25 mix-blend-overlay pointer-events-none"
@@ -359,7 +429,9 @@ export const PricingManagerView: React.FC = () => {
                     <div className="flex flex-col">
                       <span className="text-[10px] text-slate-500">Plus-value poudrage :</span>
                       <span className="font-mono font-bold text-slate-200">
-                        {color.pricePerM2Dzd > 0 ? `+${formatDZD(color.pricePerM2Dzd)}/m²` : 'Inclus (0 DZD)'}
+                        {color.pricePerM2Dzd > 0
+                          ? `+${formatDZD(color.pricePerM2Dzd)}/m²`
+                          : 'Inclus (0 DZD)'}
                       </span>
                     </div>
 
@@ -394,7 +466,9 @@ export const PricingManagerView: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          if (window.confirm(`Supprimer la teinte ${color.code} du catalogue ?`)) {
+                          if (
+                            window.confirm(`Supprimer la teinte ${color.code} du catalogue atelier ?`)
+                          ) {
                             deleteBpcColor(color.id)
                             showSaveNotice(`Teinte ${color.code} supprimée`)
                           }
@@ -477,7 +551,7 @@ export const PricingManagerView: React.FC = () => {
                           updateSlatPrice(slatTypeKey, val)
                           showSaveNotice(`Tarif ${spec.name} mis à jour : ${formatDZD(val)}/m²`)
                         }}
-                        className="w-28 bg-[#0E1322] border border-slate-700 rounded-xl px-3 py-1.5 font-mono font-bold text-sky-300 text-right text-sm focus:outline-none focus:border-sky-500"
+                        className="w-28 bg-[#0E1322] border border-slate-700 rounded-xl px-3 py-1.5 font-mono font-bold text-sky-300 text-right text-sm focus:outline-none focus:border-sky-500 cursor-text"
                       />
                       <span className="text-xs font-mono text-slate-400 font-bold">DZD</span>
                     </div>
@@ -562,7 +636,7 @@ export const PricingManagerView: React.FC = () => {
                           updateMotorPrice(m.type, val)
                           showSaveNotice(`Forfait moteur ${m.title} mis à jour : ${formatDZD(val)}`)
                         }}
-                        className="w-28 bg-[#0E1322] border border-slate-700 rounded-xl px-3 py-1.5 font-mono font-bold text-emerald-400 text-right text-sm focus:outline-none focus:border-emerald-500"
+                        className="w-28 bg-[#0E1322] border border-slate-700 rounded-xl px-3 py-1.5 font-mono font-bold text-emerald-400 text-right text-sm focus:outline-none focus:border-emerald-500 cursor-text"
                       />
                       <span className="text-xs font-mono text-slate-400 font-bold">DZD</span>
                     </div>
@@ -574,149 +648,280 @@ export const PricingManagerView: React.FC = () => {
         </div>
       )}
 
-      {/* ─────────────────── MODAL AJOUT / ÉDITION TEINTE BPC ─────────────────── */}
+      {/* ─────────────────── MODAL "CAHIER DE COULEUR BPC ALGÉRIE" (0 ERREUR) ─────────────────── */}
       <CustomModal
         isOpen={isColorModalOpen}
         onClose={() => setIsColorModalOpen(false)}
-        title={editingColor ? `Modifier ${editingColor.code}` : 'Ajouter une Teinte du Catalogue BPC'}
-        subtitle="Enregistrez une référence Boyasan Powder Coating Algérie avec texture et tarif au m²"
-        maxWidth="lg"
+        title={
+          editingColor
+            ? `Modifier Teinte : ${editingColor.code}`
+            : 'Cahier de Couleur BPC Algérie (Boyasan Powder Coating)'
+        }
+        subtitle={
+          editingColor
+            ? 'Ajustez la finition, la plus-value au m² ou la disponibilité en stock'
+            : 'Feuilletez le nuancier officiel certifié et activez la teinte dans votre atelier sans erreur de code ou de couleur'
+        }
+        maxWidth="4xl"
       >
-        <form onSubmit={handleSaveColor} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <CustomInput
-              label="Code Teinte BPC *"
-              value={formCode}
-              onChange={(e) => setFormCode(e.target.value)}
-              placeholder="ex: BPC 7016 Sablé"
-              required
-            />
+        <form onSubmit={handleSaveColor} className="space-y-5">
+          {!editingColor ? (
+            /* Mode 1: Feuilleter le Cahier de Couleur BPC Maître */
+            <div className="space-y-3">
+              {/* Barre de Recherche dans le Cahier Maître */}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="relative flex-1 min-w-[220px]">
+                  <Search size={14} className="absolute left-3 top-2.5 text-slate-500" />
+                  <input
+                    type="text"
+                    value={bookletSearch}
+                    onChange={(e) => setBookletSearch(e.target.value)}
+                    placeholder="Tapez un numéro RAL ou nom (ex: 7039, sépia, 9005, anthracite)..."
+                    className="w-full bg-[#0E1322] border border-slate-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                  />
+                </div>
 
-            <CustomInput
-              label="Référence RAL de base *"
-              value={formRal}
-              onChange={(e) => setFormRal(e.target.value)}
-              placeholder="ex: 7016 ou 9005"
-              required
-            />
-          </div>
+                {/* Filtre par Famille Chromatique */}
+                <div className="flex items-center gap-1 overflow-x-auto text-[10px] pb-1">
+                  {BPC_COLOR_FAMILIES.map((fam) => (
+                    <button
+                      key={fam}
+                      type="button"
+                      onClick={() => setBookletFamily(fam)}
+                      className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer border whitespace-nowrap ${
+                        bookletFamily === fam
+                          ? 'bg-sky-500 text-white border-sky-400'
+                          : 'bg-[#0E1322] text-slate-400 border-slate-800 hover:text-slate-200'
+                      }`}
+                    >
+                      {fam}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <CustomInput
-            label="Désignation Commerciale"
-            value={formName}
-            onChange={(e) => setFormName(e.target.value)}
-            placeholder="ex: Gris Anthracite Sablé Texturé Qualicoat"
-          />
+              {/* Grille du Nuancier Maître BPC */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-60 overflow-y-auto pr-1 p-1 bg-[#090D17] rounded-xl border border-slate-800/80">
+                {filteredMasterColors.map((master) => {
+                  const isSelected = selectedMasterColor.ralCode === master.ralCode
+                  const alreadyInStock = bpcColors.some(
+                    (c) => c.ralReference === master.ralCode
+                  )
 
-          <div className="grid grid-cols-2 gap-3">
-            <CustomSelect
-              label="Texture / Finition BPC *"
-              value={formTexture}
-              onChange={(val) => setFormTexture(val as BpcTexture)}
-              options={[
-                { value: 'sable', label: 'Sablé / Texturé Fin (TX)' },
-                { value: 'mat', label: 'Mat 25-30% (M)' },
-                { value: 'brillant', label: 'Brillant 85% (G)' },
-                { value: 'satine', label: 'Satiné 60% (S)' },
-                { value: 'metallise', label: 'Bonded Métallisé (BM)' },
-                { value: 'martele', label: 'Martelé / Effet Forgé' },
-              ]}
-            />
+                  return (
+                    <button
+                      key={master.ralCode}
+                      type="button"
+                      onClick={() => handleSelectMaster(master)}
+                      className={`p-2 rounded-xl border flex items-center gap-2.5 text-left transition-all cursor-pointer relative overflow-hidden ${
+                        isSelected
+                          ? 'border-sky-400 bg-sky-500/15 shadow-[0_0_12px_rgba(14,165,233,0.3)] ring-2 ring-sky-400'
+                          : 'border-slate-800/90 bg-[#0E1322] hover:border-slate-700'
+                      }`}
+                    >
+                      {/* Pastille de Couleur Certifiée */}
+                      <span
+                        className="w-8 h-8 rounded-lg border border-white/25 shadow-inner shrink-0 relative"
+                        style={{ backgroundColor: master.hex }}
+                      >
+                        {isSelected && (
+                          <span className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
+                            <CheckCircle2 size={15} className="text-white drop-shadow" />
+                          </span>
+                        )}
+                      </span>
 
-            <CustomSelect
-              label="Gamme Produit BPC *"
-              value={formSeries}
-              onChange={(val) => setFormSeries(val)}
-              options={[
-                { value: 'BPCOAT-PE (Qualicoat)', label: 'BPCOAT-PE (Polyester Extérieur)' },
-                { value: 'BPCOAT-TF (Sans TGIC)', label: 'BPCOAT-TF (Polyester Sans TGIC)' },
-                { value: 'BPCOAT-BM (Métallisé)', label: 'BPCOAT-BM (Bonded Metallic)' },
-                { value: 'BPCOAT-EP (Hybride)', label: 'BPCOAT-EP (Époxy-Polyester)' },
-              ]}
-            />
-          </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-slate-200 text-xs">
+                            RAL {master.ralCode}
+                          </span>
+                          {master.popularInAlgeria && (
+                            <span
+                              className="text-amber-400 shrink-0"
+                              title="Très populaire en Algérie"
+                            >
+                              <Star size={10} fill="currentColor" />
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-slate-400 truncate" title={master.standardName}>
+                          {master.standardName}
+                        </div>
+                        {alreadyInStock && (
+                          <span className="text-[9px] text-emerald-400 font-semibold">
+                            Déjà au catalogue
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
 
-          {/* Sélecteur de Couleur & Code Hex */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-300 block">
-              Nuance Couleur & Code HEX :
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={formHex}
-                onChange={(e) => setFormHex(e.target.value)}
-                className="w-12 h-10 rounded-xl border border-slate-700 bg-transparent cursor-pointer p-0.5"
-              />
-              <input
-                type="text"
-                value={formHex}
-                onChange={(e) => setFormHex(e.target.value)}
-                placeholder="#2E353B"
-                className="w-32 bg-[#0E1322] border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono uppercase text-slate-100"
-              />
+          {/* Panneau de Configuration de la Finition & Plus-Value */}
+          <div className="p-4 rounded-2xl bg-[#090D17] border border-slate-800 space-y-4">
+            {/* Visualisation de la Teinte Choisie */}
+            <div className="flex items-center gap-3.5 pb-3 border-b border-slate-800">
               <div
-                className="flex-1 h-10 rounded-xl border border-slate-700 flex items-center justify-center text-xs font-bold font-mono text-white shadow-inner"
-                style={{ backgroundColor: formHex }}
+                className="w-14 h-14 rounded-xl border-2 border-white/30 shadow-lg shrink-0 relative flex items-center justify-center overflow-hidden"
+                style={{ backgroundColor: selectedMasterColor.hex }}
               >
-                Aperçu : {formHex}
+                {formTexture === 'sable' && (
+                  <div
+                    className="absolute inset-0 opacity-30 mix-blend-overlay pointer-events-none"
+                    style={{
+                      backgroundImage: 'radial-gradient(circle, #fff 1.2px, transparent 1.2px)',
+                      backgroundSize: '3px 3px',
+                    }}
+                  />
+                )}
+                {formTexture === 'brillant' && (
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent pointer-events-none" />
+                )}
+                {formTexture === 'metallise' && <Sparkles size={16} className="text-white/70" />}
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-mono font-bold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                    RAL {selectedMasterColor.ralCode}
+                  </span>
+                  <span className="text-xs font-bold text-slate-100 truncate">
+                    {selectedMasterColor.standardName}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold text-slate-200">
+                    Code Final :{' '}
+                    <strong className="text-sky-300">
+                      {editingColor
+                        ? editingColor.code
+                        : `BPC ${selectedMasterColor.ralCode} ${TEXTURE_CONFIG[formTexture].short}`}
+                    </strong>
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    ({selectedMasterColor.hex})
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Presets rapides */}
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {PRESET_HEX_COLORS.map((hex) => (
-                <button
-                  key={hex}
-                  type="button"
-                  onClick={() => setFormHex(hex)}
-                  className={`w-6 h-6 rounded-lg border transition-transform cursor-pointer ${
-                    formHex.toLowerCase() === hex.toLowerCase() ? 'scale-110 ring-2 ring-sky-400 border-white' : 'border-slate-700 hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: hex }}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <CustomInput
-              label="Plus-value au m² (DZD)"
-              type="number"
-              min="0"
-              step="50"
-              value={formPriceM2}
-              onChange={(e) => setFormPriceM2(parseInt(e.target.value) || 0)}
-              helpText="Ex: 300 DZD pour Sablé, 0 pour blanc standard"
-            />
-
-            <div className="flex flex-col justify-center pt-5">
-              <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-200">
-                <input
-                  type="checkbox"
-                  checked={formInStock}
-                  onChange={(e) => setFormInStock(e.target.checked)}
-                  className="rounded border-slate-700 text-sky-500 cursor-pointer w-4 h-4"
-                />
-                <span className="font-semibold">Disponible en Stock Atelier</span>
+            {/* Choix de la Texture / Finition du Four BPC */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300 block">
+                1. Choisissez la Finition BPC (Aspect & Brillance du Four) :
               </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {(
+                  [
+                    'sable',
+                    'mat',
+                    'brillant',
+                    'satine',
+                    'metallise',
+                    'martele',
+                  ] as BpcTexture[]
+                ).map((tex) => {
+                  const cfg = TEXTURE_CONFIG[tex]
+                  const isSelected = formTexture === tex
+
+                  return (
+                    <button
+                      key={tex}
+                      type="button"
+                      onClick={() => handleTextureSelect(tex)}
+                      className={`p-2 rounded-xl border flex flex-col items-start gap-1 transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-sky-400 bg-sky-500/20 shadow-md ring-1 ring-sky-400 text-white'
+                          : 'border-slate-800 bg-[#0E1322] text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                      }`}
+                    >
+                      <span className="text-xs font-bold">{cfg.label}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {cfg.defaultSurchargeDzd > 0
+                          ? `+${cfg.defaultSurchargeDzd} DZD/m²`
+                          : 'Sans plus-value'}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Chiffrage Plus-Value au m² & Stock */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  2. Plus-value Thermolaquage au m² (DZD) :
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="50"
+                    value={formPriceM2}
+                    onChange={(e) => setFormPriceM2(parseInt(e.target.value) || 0)}
+                    className="w-full bg-[#0E1322] border border-slate-700 rounded-xl px-3 py-2 font-mono font-bold text-sky-300 text-sm focus:outline-none focus:border-sky-500 cursor-text"
+                  />
+                  <span className="text-xs font-mono font-bold text-slate-400">DZD/m²</span>
+                </div>
+                <span className="text-[10px] text-slate-500 mt-1 block">
+                  Exemple : 300 DZD pour Sablé/Texturé, 0 pour mat ou brillant standard.
+                </span>
+              </div>
+
+              <div className="flex flex-col justify-center pt-2">
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  3. Disponibilité en Poudre Atelier :
+                </label>
+                <label className="flex items-center gap-2.5 p-2 rounded-xl border border-slate-800 bg-[#0E1322] cursor-pointer hover:border-slate-700 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formInStock}
+                    onChange={(e) => setFormInStock(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-700 text-sky-500 cursor-pointer"
+                  />
+                  <span className="text-xs font-medium text-slate-200">
+                    {formInStock
+                      ? 'Poudre en Stock (Disponible immédiatement)'
+                      : 'Poudre Épuisée (À commander chez BPC Algérie)'}
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-800 flex justify-end gap-2.5">
-            <button
-              type="button"
-              onClick={() => setIsColorModalOpen(false)}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-400 text-white shadow-lg shadow-sky-500/25 transition-all cursor-pointer"
-            >
-              {editingColor ? 'Mettre à jour' : 'Enregistrer dans le Catalogue'}
-            </button>
+          {/* Boutons d'Action */}
+          <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+            <span className="text-[11px] text-slate-500 flex items-center gap-1.5">
+              <CheckCircle2 size={13} className="text-emerald-400" />
+              Nuance certifiée officielle Boyasan Powder Coating • Zéro erreur de teinte
+            </span>
+
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsColorModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Annuler
+              </button>
+
+              <button
+                type="submit"
+                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white shadow-lg shadow-sky-500/25 transition-all cursor-pointer flex items-center gap-2"
+              >
+                <Check size={15} />
+                <span>
+                  {editingColor
+                    ? 'Mettre à jour la Teinte'
+                    : 'Activer cette Teinte BPC au Catalogue'}
+                </span>
+              </button>
+            </div>
           </div>
         </form>
       </CustomModal>
