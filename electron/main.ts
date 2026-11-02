@@ -15,6 +15,7 @@ function createWindow() {
     height: 900,
     minWidth: 1024,
     minHeight: 700,
+    frame: false, // Frameless window for bespoke TitleBar
     title: 'PERFECT METAL — ERP Rideaux Métalliques & Thermolaquage',
     autoHideMenuBar: true,
     fullscreenable: true,
@@ -42,6 +43,15 @@ function createWindow() {
     mainWindow?.focus()
   })
 
+  // Synchronisation de l'état maximisé avec la TitleBar custom
+  mainWindow.on('maximize', () => {
+    mainWindow?.webContents.send('window:maximizedChange', true)
+  })
+
+  mainWindow.on('unmaximize', () => {
+    mainWindow?.webContents.send('window:maximizedChange', false)
+  })
+
   // Gestion des liens externes
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https:') || url.startsWith('http:')) {
@@ -55,10 +65,31 @@ function createWindow() {
   })
 }
 
-// IPC Handlers
+// IPC Handlers - Window Controls
+ipcMain.handle('window:minimize', () => {
+  mainWindow?.minimize()
+})
+
+ipcMain.handle('window:maximize', () => {
+  if (mainWindow?.isMaximized()) {
+    mainWindow.unmaximize()
+  } else {
+    mainWindow?.maximize()
+  }
+})
+
+ipcMain.handle('window:close', () => {
+  mainWindow?.close()
+})
+
+ipcMain.handle('window:isMaximized', () => {
+  return mainWindow?.isMaximized() ?? false
+})
+
+// IPC Handlers - App info & print
 ipcMain.handle('app:getInfo', () => ({
   appName: 'PERFECT METAL ERP',
-  version: '1.0.0',
+  version: '1.2.0',
   userDataPath: app.getPath('userData'),
 }))
 

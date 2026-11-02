@@ -74,7 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenConfigurator }) => {
 
   return (
     <aside
-      className={`bg-[#080B12] border-r border-slate-800/80 flex flex-col justify-between select-none shrink-0 no-print h-screen overflow-hidden transition-all duration-200 ease-in-out ${
+      className={`bg-[#080B12] border-r border-slate-800/80 flex flex-col justify-between select-none shrink-0 no-print h-full overflow-hidden transition-all duration-200 ease-in-out ${
         isSidebarCollapsed ? 'w-16' : 'w-60'
       }`}
     >

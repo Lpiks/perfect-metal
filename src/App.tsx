@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useERPStore } from './store/erpStore'
+import { TitleBar } from './components/layout/TitleBar'
 import { Sidebar } from './components/layout/Sidebar'
 import { Header } from './components/layout/Header'
 import { DashboardView } from './components/dashboard/DashboardView'
@@ -49,22 +50,28 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#07090E] text-slate-100 font-sans">
-      {/* Barre Latérale Navigation */}
-      <Sidebar onOpenConfigurator={() => setIsConfiguratorModalOpen(true)} />
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#07090E] text-slate-100 font-sans">
+      {/* Custom Pro Frameless Title Bar */}
+      <TitleBar />
 
-      {/* Contenu Principal */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Entête Supérieure */}
-        <Header onOpenConfigurator={() => setIsConfiguratorModalOpen(true)} />
+      {/* Main App Workspace */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Navigation Sidebar */}
+        <Sidebar onOpenConfigurator={() => setIsConfiguratorModalOpen(true)} />
 
-        {/* Zone de contenu défilable */}
-        <main className="flex-1 overflow-y-auto p-3.5 sm:p-4 md:p-5 bg-[#07090E]">
-          {renderActiveView()}
-        </main>
+        {/* Content Container */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+          {/* Top Header */}
+          <Header onOpenConfigurator={() => setIsConfiguratorModalOpen(true)} />
+
+          {/* Scrollable View Area */}
+          <main className="flex-1 overflow-y-auto p-3.5 sm:p-4 md:p-5 bg-[#07090E]">
+            {renderActiveView()}
+          </main>
+        </div>
       </div>
 
-      {/* Modal Global Configurateur de Rideaux (CPQ) */}
+      {/* Global CPQ Shutter Configurator Modal */}
       <ShutterConfiguratorModal
         isOpen={isConfiguratorModalOpen}
         onClose={() => setIsConfiguratorModalOpen(false)}
