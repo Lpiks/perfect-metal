@@ -198,7 +198,7 @@ export const OrdersView: React.FC = () => {
                   return (
                     <tr key={order.id} className="hover:bg-[#0E1322]/80 transition-colors">
                       {/* Code & Type */}
-                      <td className="p-3.5">
+                      <td className="p-3.5 whitespace-nowrap">
                         <div className="font-mono font-bold text-slate-100 flex items-center gap-2">
                           <span className="text-sky-400">{order.code}</span>
                         </div>
@@ -248,24 +248,24 @@ export const OrdersView: React.FC = () => {
                       </td>
 
                       {/* Montant TTC */}
-                      <td className="p-3.5 text-right font-mono font-bold text-slate-100">
+                      <td className="p-3.5 text-right font-mono font-bold text-slate-100 whitespace-nowrap">
                         {formatDZD(order.totalTTC)}
                       </td>
 
                       {/* Statut Paiement */}
-                      <td className="p-3.5 text-center">
+                      <td className="p-3.5 text-center whitespace-nowrap">
                         <PaymentStatusBadge status={order.paymentStatus} size="sm" />
                       </td>
 
                       {/* Reste Dû */}
-                      <td className="p-3.5 text-right font-mono font-bold">
+                      <td className="p-3.5 text-right font-mono font-bold whitespace-nowrap">
                         <span className={order.balanceDue > 0 ? 'text-rose-400' : 'text-slate-500'}>
                           {formatDZD(order.balanceDue)}
                         </span>
                       </td>
 
                       {/* Actions */}
-                      <td className="p-3.5 text-center">
+                      <td className="p-3.5 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1.5">
                           {/* Voir Doc */}
                           <button

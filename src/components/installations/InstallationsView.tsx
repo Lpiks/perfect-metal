@@ -217,7 +217,7 @@ export const InstallationsView: React.FC = () => {
                 filteredJobs.map((job) => (
                   <tr key={job.id} className="hover:bg-[#0E1322]/80 transition-colors">
                     {/* Code & Commande */}
-                    <td className="p-3.5">
+                    <td className="p-3.5 whitespace-nowrap">
                       <div className="font-mono font-bold text-sky-400 text-xs">{job.code}</div>
                       <div className="text-[10px] text-slate-400 font-mono mt-0.5">Réf : {job.orderCode}</div>
                     </td>
@@ -230,7 +230,7 @@ export const InstallationsView: React.FC = () => {
                     </td>
 
                     {/* Date */}
-                    <td className="p-3.5 text-center">
+                    <td className="p-3.5 text-center whitespace-nowrap">
                       <div className="font-mono font-bold text-slate-200">{job.scheduledDate}</div>
                       {job.scheduledTime && (
                         <span className="text-[10px] text-slate-400">{job.scheduledTime}</span>
@@ -244,14 +244,14 @@ export const InstallationsView: React.FC = () => {
                     </td>
 
                     {/* Solde */}
-                    <td className="p-3.5 text-right font-mono font-bold">
+                    <td className="p-3.5 text-right font-mono font-bold whitespace-nowrap">
                       <span className={job.balanceToCollectDzd > 0 ? 'text-amber-400' : 'text-slate-500'}>
                         {formatDZD(job.balanceToCollectDzd)}
                       </span>
                     </td>
 
                     {/* Statut & PV */}
-                    <td className="p-3.5 text-center">
+                    <td className="p-3.5 text-center whitespace-nowrap">
                       {job.pvSigned ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
                           <CheckCircle2 size={11} />
@@ -266,7 +266,7 @@ export const InstallationsView: React.FC = () => {
                     </td>
 
                     {/* Actions */}
-                    <td className="p-3.5 text-center">
+                    <td className="p-3.5 text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1.5">
                         {/* Imprimer PV */}
                         <button

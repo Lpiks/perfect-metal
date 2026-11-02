@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useERPStore } from '../../store/erpStore'
 import { ProductionStage, Order } from '../../types/order'
-import { ProductionStageBadge, PaymentStatusBadge } from '../ui/CustomBadge'
+import { PaymentStatusBadge } from '../ui/CustomBadge'
 import { formatDZD } from '../../utils/currency'
 import { WorkshopCuttingSheet } from './WorkshopCuttingSheet'
 import { FileText, ArrowRight, CheckCircle2, Clock, Wrench } from 'lucide-react'
@@ -49,56 +49,56 @@ export const ProductionKanban: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* En-tête Kanban */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div>
-          <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2.5">
-            <Wrench className="text-sky-400" size={22} />
+          <h1 className="text-lg sm:text-xl font-bold text-slate-100 flex items-center gap-2">
+            <Wrench className="text-sky-400 shrink-0" size={20} />
             Suivi de Fabrication & Ordres de Travail Atelier
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-[11px] text-slate-400 mt-0.5">
             Visualisez et pilotez en temps réel le débit, le thermolaquage au four et les tests moteurs.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-[#0E1322] px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
-          <Clock size={14} className="text-sky-400" />
-          <span className="text-slate-300">
-            En atelier : <strong className="text-sky-400">{productionOrders.length}</strong> rideaux
+        <div className="flex items-center gap-2 bg-[#0E1322] px-3 py-1.5 rounded-xl border border-slate-800 text-xs shrink-0 self-start sm:self-auto">
+          <Clock size={13} className="text-sky-400 shrink-0" />
+          <span className="text-slate-300 text-[11px]">
+            En atelier : <strong className="text-sky-400 font-bold">{productionOrders.length}</strong> rideaux
           </span>
         </div>
       </div>
 
-      {/* Grille des 6 Colonnes Kanban */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-start overflow-x-auto pb-4">
+      {/* Piste Kanban Déroulante avec Colonnes à Largeur Protégée */}
+      <div className="flex gap-3.5 items-start overflow-x-auto pb-4 pt-1">
         {KANBAN_STAGES.map((col) => {
           const columnOrders = productionOrders.filter((o) => o.productionStage === col.id)
 
           return (
             <div
               key={col.id}
-              className="bg-[#0B0F1A] border border-slate-800/80 rounded-2xl p-3 flex flex-col gap-3 min-w-[260px] xl:min-w-0"
+              className="bg-[#0B0F1A] border border-slate-800/80 rounded-2xl p-3 flex flex-col gap-2.5 w-[285px] min-w-[285px] shrink-0 shadow-lg"
             >
               {/* Entête de Colonne */}
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
-                    <span>{col.icon}</span>
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800 gap-2">
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200 truncate">
+                    <span className="shrink-0">{col.icon}</span>
                     <span className="truncate">{col.title}</span>
                   </div>
-                  <span className="text-[10px] text-slate-500">{col.subtitle}</span>
+                  <span className="text-[10px] text-slate-500 truncate">{col.subtitle}</span>
                 </div>
 
-                <span className="w-5 h-5 rounded-full bg-slate-800 text-[11px] font-mono font-bold text-slate-300 flex items-center justify-center">
+                <span className="w-5 h-5 rounded-full bg-slate-800 text-[11px] font-mono font-bold text-slate-300 flex items-center justify-center shrink-0">
                   {columnOrders.length}
                 </span>
               </div>
 
               {/* Liste des Cartes Commandes */}
-              <div className="space-y-3 min-h-[450px]">
+              <div className="space-y-2.5 min-h-[440px]">
                 {columnOrders.length === 0 ? (
-                  <div className="h-40 flex items-center justify-center border border-dashed border-slate-800/60 rounded-xl text-center text-slate-600 text-xs px-2">
+                  <div className="h-36 flex items-center justify-center border border-dashed border-slate-800/60 rounded-xl text-center text-slate-600 text-xs px-3">
                     Aucune commande à cette étape
                   </div>
                 ) : (
@@ -109,85 +109,91 @@ export const ProductionKanban: React.FC = () => {
                     return (
                       <div
                         key={order.id}
-                        className="bg-[#121828] border border-slate-800 hover:border-slate-700/80 rounded-xl p-3 shadow-md flex flex-col gap-2.5 transition-all group"
+                        className="bg-[#121828] border border-slate-800 hover:border-slate-700 rounded-xl p-3 shadow-md flex flex-col gap-2.5 transition-all group"
                       >
-                        {/* Haut de la carte */}
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono font-bold text-xs text-sky-400">{order.code}</span>
-                          <span className="text-[10px] font-mono text-slate-400">
+                        {/* Haut de la carte : Code + Date sans wrapping */}
+                        <div className="flex items-center justify-between gap-2 whitespace-nowrap">
+                          <span className="font-mono font-bold text-xs text-sky-400 shrink-0">
+                            {order.code}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-400 shrink-0">
                             Livraison : {order.estimatedDeliveryDate.slice(5)}
                           </span>
                         </div>
 
                         {/* Client & Chantier */}
-                        <div>
+                        <div className="min-w-0">
                           <div className="text-xs font-semibold text-slate-100 truncate">
                             {order.clientName}
                           </div>
-                          <div className="text-[10px] text-slate-400 truncate">{order.siteAddress}</div>
+                          <div className="text-[10px] text-slate-400 truncate mt-0.5">
+                            {order.siteAddress}
+                          </div>
                         </div>
 
                         {/* Spécifications du Rideau */}
                         {firstItem && (
                           <div className="p-2 rounded-lg bg-[#0A0D16] border border-slate-800/70 text-[11px] space-y-1">
-                            <div className="flex items-center justify-between font-mono text-slate-300">
-                              <span>
-                                {firstItem.widthClearMm} × {firstItem.heightClearMm} mm
+                            <div className="flex items-center justify-between font-mono text-slate-300 whitespace-nowrap gap-2 text-[11px]">
+                              <span className="truncate">
+                                {firstItem.widthClearMm}×{firstItem.heightClearMm} mm
                               </span>
-                              <span className="text-sky-300">{firstItem.surfaceM2} m²</span>
+                              <span className="text-sky-300 font-semibold shrink-0">
+                                {firstItem.surfaceM2} m²
+                              </span>
                             </div>
 
-                            <div className="flex items-center justify-between text-[10px]">
-                              <span className="text-slate-400 truncate">
-                                {firstItem.slatType.replace('lame_', '').replace('_', ' ')}
+                            <div className="flex items-center justify-between text-[10px] whitespace-nowrap gap-2">
+                              <span className="text-slate-400 truncate capitalize">
+                                {firstItem.slatType.replace('lame_', '').replace(/_/g, ' ')}
                               </span>
                               {firstItem.finishType === 'thermolaquage_ral' ? (
-                                <span className="flex items-center gap-1 font-bold text-amber-400">
+                                <span className="flex items-center gap-1 font-bold text-amber-400 shrink-0">
                                   <span
-                                    className="w-2 h-2 rounded-full"
+                                    className="w-2 h-2 rounded-full border border-white/20 shrink-0"
                                     style={{ backgroundColor: firstItem.ralHex || '#383E42' }}
                                   />
-                                  {firstItem.ralCode}
+                                  <span>{firstItem.ralCode}</span>
                                 </span>
                               ) : (
-                                <span className="text-slate-400 font-mono">Galva</span>
+                                <span className="text-slate-400 font-mono shrink-0">Galva</span>
                               )}
                             </div>
                           </div>
                         )}
 
-                        {/* Montant & État Paiement */}
-                        <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-800/60">
-                          <span className="font-mono font-bold text-slate-200">
+                        {/* Montant & État Paiement sur 1 ligne garantie */}
+                        <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-800/60 whitespace-nowrap gap-2">
+                          <span className="font-mono font-bold text-slate-200 shrink-0">
                             {formatDZD(order.totalTTC)}
                           </span>
                           <PaymentStatusBadge status={order.paymentStatus} size="sm" />
                         </div>
 
                         {/* Boutons d'Action Rapide */}
-                        <div className="grid grid-cols-2 gap-2 pt-1">
+                        <div className="grid grid-cols-2 gap-2 pt-0.5">
                           <button
                             type="button"
                             onClick={() => setSelectedOrderForSheet(order)}
-                            className="flex items-center justify-center gap-1.5 py-1.5 px-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold cursor-pointer transition-colors"
+                            className="flex items-center justify-center gap-1.5 py-1.5 px-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold cursor-pointer transition-colors whitespace-nowrap"
                           >
-                            <FileText size={12} className="text-sky-400" />
-                            Fiche Débit
+                            <FileText size={12} className="text-sky-400 shrink-0" />
+                            <span>Fiche Débit</span>
                           </button>
 
                           {nextStage ? (
                             <button
                               type="button"
                               onClick={() => advanceProductionStage(order.id, nextStage)}
-                              className="flex items-center justify-center gap-1 py-1.5 px-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 rounded-lg text-[11px] font-semibold cursor-pointer transition-all"
+                              className="flex items-center justify-center gap-1 py-1.5 px-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 rounded-lg text-[11px] font-semibold cursor-pointer transition-all whitespace-nowrap"
                             >
                               <span>Avancer</span>
-                              <ArrowRight size={12} />
+                              <ArrowRight size={12} className="shrink-0" />
                             </button>
                           ) : (
-                            <div className="flex items-center justify-center gap-1 py-1.5 px-2 text-emerald-400 text-[11px] font-semibold">
-                              <CheckCircle2 size={12} />
-                              Terminé
+                            <div className="flex items-center justify-center gap-1 py-1.5 px-2 text-emerald-400 text-[11px] font-semibold whitespace-nowrap">
+                              <CheckCircle2 size={12} className="shrink-0" />
+                              <span>Terminé</span>
                             </div>
                           )}
                         </div>
