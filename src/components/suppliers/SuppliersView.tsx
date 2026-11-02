@@ -425,6 +425,7 @@ export const SuppliersView: React.FC = () => {
                 label="Date de Réception Prévue"
                 value={deliveryDate}
                 onChange={setDeliveryDate}
+                align="right"
               />
             </div>
           </div>

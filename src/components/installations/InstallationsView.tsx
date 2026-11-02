@@ -6,6 +6,7 @@ import { CustomModal } from '../ui/CustomModal'
 import { CustomInput } from '../ui/CustomInput'
 import { CustomSelect } from '../ui/CustomSelect'
 import { CustomDatePicker } from '../ui/CustomDatePicker'
+import { CustomTimePicker } from '../ui/CustomTimePicker'
 import { PvReceptionDocument } from './PvReceptionDocument'
 import {
   Truck,
@@ -355,11 +356,11 @@ export const InstallationsView: React.FC = () => {
                 value={planDate}
                 onChange={setPlanDate}
               />
-              <CustomInput
+              <CustomTimePicker
                 label="Heure Prévue"
-                type="time"
                 value={planTime}
-                onChange={(e) => setPlanTime(e.target.value)}
+                onChange={setPlanTime}
+                align="right"
               />
             </div>
           </div>

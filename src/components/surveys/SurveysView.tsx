@@ -284,6 +284,7 @@ export const SurveysView: React.FC = () => {
                 label="Date de Visite"
                 value={surveyDate}
                 onChange={setSurveyDate}
+                align="right"
               />
             </div>
 

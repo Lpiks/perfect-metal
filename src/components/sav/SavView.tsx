@@ -316,6 +316,7 @@ export const SavView: React.FC = () => {
                 label="Date d'Intervention Prévue"
                 value={scheduledDate}
                 onChange={setScheduledDate}
+                align="right"
               />
             </div>
           </div>

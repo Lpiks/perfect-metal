@@ -14,7 +14,7 @@ import {
 } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
-interface CustomDatePickerProps {
+export interface CustomDatePickerProps {
   label?: string
   value: string // YYYY-MM-DD
   onChange: (dateStr: string) => void
@@ -23,6 +23,7 @@ interface CustomDatePickerProps {
   disabled?: boolean
   className?: string
   error?: string
+  align?: 'left' | 'right'
 }
 
 export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
@@ -33,6 +34,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
   disabled = false,
   className = '',
   error,
+  align = 'left',
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -81,7 +83,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl border text-sm transition-all duration-150 cursor-pointer ${
+        className={`w-full flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl border text-xs transition-all duration-150 cursor-pointer ${
           disabled
             ? 'bg-slate-900/40 border-slate-800/60 text-slate-600 cursor-not-allowed'
             : isOpen
@@ -92,7 +94,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
         }`}
       >
         <div className="flex items-center gap-2.5 truncate">
-          <CalendarIcon size={16} className="text-sky-400 shrink-0" />
+          <CalendarIcon size={15} className="text-sky-400 shrink-0" />
           <span className={`truncate font-medium ${!value ? 'text-slate-500' : 'text-slate-100'}`}>
             {formattedDisplay}
           </span>
@@ -106,82 +108,86 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             }}
             className="p-1 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-md cursor-pointer transition-colors"
           >
-            <X size={13} />
+            <X size={12} />
           </span>
         )}
       </button>
 
-      {/* Popover Calendar Panel */}
+      {/* Popover Calendar Panel - Ultra Compact & Studio Themed */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1.5 z-50 bg-[#0F1422] border border-slate-700/80 rounded-2xl shadow-2xl backdrop-blur-xl p-3.5 w-76 animate-in fade-in zoom-in-95 duration-100 flex flex-col gap-3">
+        <div
+          className={`absolute top-full mt-1.5 z-50 bg-[#0F1422] border border-slate-700/80 rounded-2xl shadow-2xl backdrop-blur-xl p-2.5 w-64 animate-in fade-in zoom-in-95 duration-100 flex flex-col gap-2 ${
+            align === 'right' ? 'right-0' : 'left-0'
+          }`}
+        >
           {/* Quick Preset Buttons */}
-          <div className="flex items-center gap-1.5 pb-2.5 border-b border-slate-800 overflow-x-auto no-scrollbar">
+          <div className="grid grid-cols-4 gap-1 pb-2 border-b border-slate-800/80">
             <button
               type="button"
               onClick={() => handleSelectDate(new Date())}
-              className="px-2 py-1 text-[10px] font-medium bg-slate-800 hover:bg-sky-500/20 hover:text-sky-300 text-slate-300 rounded-lg cursor-pointer transition-colors whitespace-nowrap"
+              className="py-1 text-[9px] font-medium bg-slate-800/80 hover:bg-sky-500/20 hover:text-sky-300 text-slate-300 rounded-md cursor-pointer transition-colors text-center truncate"
             >
               Aujourd'hui
             </button>
             <button
               type="button"
               onClick={() => handleSelectDate(addDays(new Date(), 3))}
-              className="px-2 py-1 text-[10px] font-medium bg-slate-800 hover:bg-sky-500/20 hover:text-sky-300 text-slate-300 rounded-lg cursor-pointer transition-colors whitespace-nowrap"
+              className="py-1 text-[9px] font-medium bg-slate-800/80 hover:bg-sky-500/20 hover:text-sky-300 text-slate-300 rounded-md cursor-pointer transition-colors text-center truncate"
             >
               +3 Jours
             </button>
             <button
               type="button"
               onClick={() => handleSelectDate(addDays(new Date(), 7))}
-              className="px-2 py-1 text-[10px] font-medium bg-slate-800 hover:bg-sky-500/20 hover:text-sky-300 text-slate-300 rounded-lg cursor-pointer transition-colors whitespace-nowrap"
+              className="py-1 text-[9px] font-medium bg-slate-800/80 hover:bg-sky-500/20 hover:text-sky-300 text-slate-300 rounded-md cursor-pointer transition-colors text-center truncate"
             >
               +1 Semaine
             </button>
             <button
               type="button"
               onClick={() => handleSelectDate(endOfMonth(new Date()))}
-              className="px-2 py-1 text-[10px] font-medium bg-slate-800 hover:bg-sky-500/20 hover:text-sky-300 text-slate-300 rounded-lg cursor-pointer transition-colors whitespace-nowrap"
+              className="py-1 text-[9px] font-medium bg-slate-800/80 hover:bg-sky-500/20 hover:text-sky-300 text-slate-300 rounded-md cursor-pointer transition-colors text-center truncate"
             >
-              Fin du Mois
+              Fin Mois
             </button>
           </div>
 
           {/* Month & Year Navigation Header */}
-          <div className="flex items-center justify-between px-1">
+          <div className="flex items-center justify-between px-0.5">
             <button
               type="button"
               onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-              className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg cursor-pointer transition-colors"
+              className="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded-md cursor-pointer transition-colors"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={14} />
             </button>
 
-            <span className="text-xs font-semibold text-slate-100 capitalize">
+            <span className="text-[11px] font-bold text-slate-100 capitalize">
               {format(currentMonth, 'MMMM yyyy', { locale: fr })}
             </span>
 
             <button
               type="button"
               onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-              className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg cursor-pointer transition-colors"
+              className="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded-md cursor-pointer transition-colors"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={14} />
             </button>
           </div>
 
           {/* Days of Week Header */}
-          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-slate-500">
-            <span>Lun</span>
-            <span>Mar</span>
-            <span>Mer</span>
-            <span>Jeu</span>
-            <span>Ven</span>
-            <span>Sam</span>
-            <span>Dim</span>
+          <div className="grid grid-cols-7 gap-0.5 text-center text-[9px] font-bold text-slate-500 uppercase">
+            <span>Lu</span>
+            <span>Ma</span>
+            <span>Me</span>
+            <span>Je</span>
+            <span>Ve</span>
+            <span>Sa</span>
+            <span>Di</span>
           </div>
 
           {/* Days Matrix */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5">
             {daysInGrid.map((d, index) => {
               const isSelected = value ? isSameDay(d, new Date(value)) : false
               const isCurrentDay = isToday(d)
@@ -192,9 +198,9 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                   key={index}
                   type="button"
                   onClick={() => handleSelectDate(d)}
-                  className={`h-8 w-8 mx-auto flex items-center justify-center rounded-lg text-xs font-medium transition-all duration-100 cursor-pointer ${
+                  className={`h-7 w-7 mx-auto flex items-center justify-center rounded-md text-[11px] font-medium transition-all duration-100 cursor-pointer ${
                     isSelected
-                      ? 'bg-sky-500 text-white font-bold shadow-[0_0_12px_rgba(14,165,233,0.5)]'
+                      ? 'bg-sky-500 text-white font-bold shadow-sm shadow-sky-500/50'
                       : isCurrentDay
                       ? 'bg-sky-500/20 text-sky-400 font-semibold border border-sky-500/40'
                       : isDifferentMonth
