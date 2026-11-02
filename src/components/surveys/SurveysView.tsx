@@ -268,7 +268,7 @@ export const SurveysView: React.FC = () => {
               }))}
             />
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <CustomInput
                 label="Adresse du Chantier"
                 value={siteAddress}
@@ -279,6 +279,11 @@ export const SurveysView: React.FC = () => {
                 label="Nom du Métreur / Visiteur"
                 value={surveyorName}
                 onChange={(e) => setSurveyorName(e.target.value)}
+              />
+              <CustomDatePicker
+                label="Date de Visite"
+                value={surveyDate}
+                onChange={setSurveyDate}
               />
             </div>
 
