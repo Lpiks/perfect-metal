@@ -36,6 +36,11 @@ export type ERPView =
 interface ERPStoreState {
   currentView: ERPView
   setCurrentView: (view: ERPView) => void
+
+  // Sidebar Layout State
+  isSidebarCollapsed: boolean
+  toggleSidebar: () => void
+  setSidebarCollapsed: (collapsed: boolean) => void
   
   // Données Principales
   clients: Client[]
@@ -161,6 +166,10 @@ const initialLoaded = loadSavedState()
 export const useERPStore = create<ERPStoreState>((set, get) => ({
   currentView: 'dashboard',
   setCurrentView: (view) => set({ currentView: view }),
+
+  isSidebarCollapsed: false,
+  toggleSidebar: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
+  setSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed }),
 
   clients: initialLoaded.clients,
   orders: initialLoaded.orders,

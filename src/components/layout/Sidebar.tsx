@@ -20,7 +20,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ onOpenConfigurator }) => {
-  const { currentView, setCurrentView, orders, inventory, installations, savTickets } = useERPStore()
+  const { currentView, setCurrentView, orders, inventory, installations, savTickets, isSidebarCollapsed } = useERPStore()
 
   const inProductionCount = orders.filter(
     (o) => o.status === 'actif' && o.productionStage !== 'livre_pose' && o.documentType !== 'devis'
@@ -73,37 +73,47 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenConfigurator }) => {
   ]
 
   return (
-    <aside className="w-64 bg-[#080B12] border-r border-slate-800/80 flex flex-col justify-between select-none shrink-0 no-print h-screen overflow-hidden">
-      {/* Haut : Logo & Marque */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-4 border-b border-slate-800/80 flex items-center gap-3">
+    <aside
+      className={`bg-[#080B12] border-r border-slate-800/80 flex flex-col justify-between select-none shrink-0 no-print h-screen overflow-hidden transition-all duration-200 ease-in-out ${
+        isSidebarCollapsed ? 'w-16' : 'w-60'
+      }`}
+    >
+      {/* Top: Logo & Nav items */}
+      <div className="flex-1 overflow-y-auto no-scrollbar">
+        {/* Brand header */}
+        <div className={`border-b border-slate-800/80 flex items-center gap-3 ${isSidebarCollapsed ? 'p-3 justify-center' : 'p-3.5'}`}>
           <img
             src="./logo.jpg"
             alt="PERFECT METAL"
-            className="w-10 h-10 rounded-xl object-contain border border-sky-500/30 shadow-md shrink-0"
+            className="w-9 h-9 rounded-xl object-contain border border-sky-500/30 shadow-md shrink-0"
           />
-          <div className="flex flex-col">
-            <span className="font-black text-sm tracking-wider text-white">PERFECT METAL</span>
-            <span className="text-[10px] text-sky-400 font-semibold tracking-widest uppercase">
-              ERP INDUSTRIEL
-            </span>
-          </div>
+          {!isSidebarCollapsed && (
+            <div className="flex flex-col truncate">
+              <span className="font-black text-xs tracking-wider text-white truncate">PERFECT METAL</span>
+              <span className="text-[9px] text-sky-400 font-semibold tracking-widest uppercase truncate">
+                ERP INDUSTRIEL
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Bouton Rapide Nouveau Rideau */}
-        <div className="p-3">
+        {/* Quick CPQ Action Button */}
+        <div className="p-2.5">
           <button
             type="button"
             onClick={onOpenConfigurator}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-sky-500/25 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.98]"
+            title="Nouveau Rideau (CPQ)"
+            className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white rounded-xl text-xs font-bold shadow-md shadow-sky-500/20 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.98] ${
+              isSidebarCollapsed ? 'h-9 px-0' : 'px-3 py-2'
+            }`}
           >
-            <Plus size={15} />
-            <span>Nouveau Rideau (CPQ)</span>
+            <Plus size={15} className="shrink-0" />
+            {!isSidebarCollapsed && <span className="truncate">Nouveau Rideau</span>}
           </button>
         </div>
 
-        {/* Menu de Navigation */}
-        <nav className="px-2.5 py-1 space-y-0.5">
+        {/* Navigation items */}
+        <nav className="px-2 py-1 space-y-0.5">
           {navItems.map((item) => {
             const isActive = currentView === item.id
             return (
@@ -111,25 +121,38 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenConfigurator }) => {
                 key={item.id}
                 type="button"
                 onClick={() => setCurrentView(item.id)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                title={isSidebarCollapsed ? item.label : undefined}
+                className={`w-full flex items-center rounded-xl text-xs font-medium transition-all cursor-pointer relative group ${
+                  isSidebarCollapsed ? 'justify-center h-9 px-0' : 'justify-between px-3 py-2'
+                } ${
                   isActive
-                    ? 'bg-sky-500/15 text-sky-400 font-bold border border-sky-500/30 shadow-[0_0_15px_rgba(14,165,233,0.1)]'
+                    ? 'bg-sky-500/15 text-sky-400 font-bold border border-sky-500/30 shadow-[0_0_12px_rgba(14,165,233,0.1)]'
                     : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
                 }`}
               >
-                <div className="flex items-center gap-2.5 truncate">
-                  <span className={isActive ? 'text-sky-400' : 'text-slate-500'}>{item.icon}</span>
-                  <span className="truncate">{item.label}</span>
+                <div className={`flex items-center gap-2.5 truncate ${isSidebarCollapsed ? 'justify-center' : ''}`}>
+                  <span className={`shrink-0 ${isActive ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-300'}`}>
+                    {item.icon}
+                  </span>
+                  {!isSidebarCollapsed && <span className="truncate text-[11px]">{item.label}</span>}
                 </div>
 
                 {item.badge !== undefined && (
-                  <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold leading-none ${
-                      item.badgeColor || 'bg-slate-800 text-slate-300'
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
+                  isSidebarCollapsed ? (
+                    <span
+                      className={`absolute top-1 right-1 w-2 h-2 rounded-full ring-2 ring-[#080B12] ${
+                        item.badgeColor || 'bg-sky-500'
+                      }`}
+                    />
+                  ) : (
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold leading-none shrink-0 ${
+                        item.badgeColor || 'bg-slate-800 text-slate-300'
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  )
                 )}
               </button>
             )
@@ -137,14 +160,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenConfigurator }) => {
         </nav>
       </div>
 
-      {/* Bas : Indicateur Hors-Ligne & Version */}
-      <div className="p-3.5 border-t border-slate-800/80 bg-[#06080E] shrink-0">
-        <div className="flex items-center gap-2.5 text-xs text-slate-400">
-          <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34D399]" />
-          <div className="flex flex-col">
-            <span className="text-[11px] font-semibold text-slate-200">100% Hors-Ligne</span>
-            <span className="text-[10px] text-slate-500">Base Locale • v1.2.0</span>
-          </div>
+      {/* Bottom: Offline & Version indicator */}
+      <div className={`border-t border-slate-800/80 bg-[#06080E] ${isSidebarCollapsed ? 'p-2.5 flex justify-center' : 'p-3'}`}>
+        <div className={`flex items-center gap-2 text-xs text-slate-400 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
+          <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34D399] shrink-0" />
+          {!isSidebarCollapsed && (
+            <div className="flex flex-col truncate">
+              <span className="text-[10px] font-semibold text-slate-200 truncate">100% Hors-Ligne</span>
+              <span className="text-[9px] text-slate-500 truncate">Base Locale • v1.2.0</span>
+            </div>
+          )}
         </div>
       </div>
     </aside>

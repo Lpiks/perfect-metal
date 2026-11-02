@@ -59,7 +59,7 @@ export const App: React.FC = () => {
         <Header onOpenConfigurator={() => setIsConfiguratorModalOpen(true)} />
 
         {/* Zone de contenu défilable */}
-        <main className="flex-1 overflow-y-auto p-5 md:p-7 bg-[#07090E]">
+        <main className="flex-1 overflow-y-auto p-3.5 sm:p-4 md:p-5 bg-[#07090E]">
           {renderActiveView()}
         </main>
       </div>
