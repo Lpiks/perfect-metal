@@ -27,6 +27,7 @@ import {
 import { CustomModal } from '../ui/CustomModal'
 import { CustomConfirmModal } from '../ui/CustomConfirmModal'
 import { CustomSwitch } from '../ui/CustomSwitch'
+import { CustomInput } from '../ui/CustomInput'
 
 const TEXTURE_CONFIG: Record<
   BpcTexture,
@@ -528,20 +529,22 @@ export const PricingManagerView: React.FC = () => {
                       <span className="text-xs font-bold text-slate-200">En dinars (DZD)</span>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <input
+                    <div className="w-36">
+                      <CustomInput
                         type="number"
-                        min="1000"
+                        min="0"
                         step="100"
+                        suffix="DZD"
                         value={currentPrice}
                         onChange={(e) => {
-                          const val = Math.max(0, parseInt(e.target.value) || 0)
+                          const val = e.target.value === '' ? 0 : Math.max(0, parseInt(e.target.value) || 0)
                           updateSlatPrice(slatTypeKey, val)
-                          showSaveNotice(`Tarif ${spec.name} mis à jour : ${formatDZD(val)}/m²`)
+                          if (val > 0) {
+                            showSaveNotice(`Tarif ${spec.name} mis à jour : ${formatDZD(val)}/m²`)
+                          }
                         }}
-                        className="w-28 bg-[#0E1322] border border-slate-700 rounded-xl px-3 py-1.5 font-mono font-bold text-sky-300 text-right text-sm focus:outline-none focus:border-sky-500 cursor-text"
+                        className="font-mono font-bold text-sky-300"
                       />
-                      <span className="text-xs font-mono text-slate-400 font-bold">DZD</span>
                     </div>
                   </div>
                 </div>
@@ -613,20 +616,22 @@ export const PricingManagerView: React.FC = () => {
 
                   <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
                     <span className="text-xs text-slate-400 font-medium">Prix Forfait :</span>
-                    <div className="flex items-center gap-2">
-                      <input
+                    <div className="w-36">
+                      <CustomInput
                         type="number"
                         min="0"
                         step="500"
+                        suffix="DZD"
                         value={currentPrice}
                         onChange={(e) => {
-                          const val = Math.max(0, parseInt(e.target.value) || 0)
+                          const val = e.target.value === '' ? 0 : Math.max(0, parseInt(e.target.value) || 0)
                           updateMotorPrice(m.type, val)
-                          showSaveNotice(`Forfait moteur ${m.title} mis à jour : ${formatDZD(val)}`)
+                          if (val > 0) {
+                            showSaveNotice(`Forfait moteur ${m.title} mis à jour : ${formatDZD(val)}`)
+                          }
                         }}
-                        className="w-28 bg-[#0E1322] border border-slate-700 rounded-xl px-3 py-1.5 font-mono font-bold text-emerald-400 text-right text-sm focus:outline-none focus:border-emerald-500 cursor-text"
+                        className="font-mono font-bold text-emerald-400"
                       />
-                      <span className="text-xs font-mono text-slate-400 font-bold">DZD</span>
                     </div>
                   </div>
                 </div>
@@ -845,17 +850,15 @@ export const PricingManagerView: React.FC = () => {
                 <label className="text-xs font-semibold text-slate-300 block mb-1">
                   2. Plus-value Thermolaquage au m² (DZD) :
                 </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="0"
-                    step="50"
-                    value={formPriceM2}
-                    onChange={(e) => setFormPriceM2(parseInt(e.target.value) || 0)}
-                    className="w-full bg-[#0E1322] border border-slate-700 rounded-xl px-3 py-2 font-mono font-bold text-sky-300 text-sm focus:outline-none focus:border-sky-500 cursor-text"
-                  />
-                  <span className="text-xs font-mono font-bold text-slate-400">DZD/m²</span>
-                </div>
+                <CustomInput
+                  type="number"
+                  min="0"
+                  step="50"
+                  suffix="DZD/m²"
+                  value={formPriceM2}
+                  onChange={(e) => setFormPriceM2(e.target.value === '' ? 0 : parseInt(e.target.value) || 0)}
+                  className="font-mono font-bold text-sky-300"
+                />
                 <span className="text-[10px] text-slate-500 mt-1 block">
                   Exemple : 300 DZD pour Sablé/Texturé, 0 pour mat ou brillant standard.
                 </span>
