@@ -178,7 +178,7 @@ export const OrdersView: React.FC = () => {
                 <th className="p-3.5 text-left">Client & Destination</th>
                 <th className="p-3.5 text-center">Spécifications Rideau</th>
                 <th className="p-3.5 text-center">Atelier</th>
-                <th className="p-3.5 text-right font-mono">Montant TTC</th>
+                <th className="p-3.5 text-right font-mono">Montant Net (DZD)</th>
                 <th className="p-3.5 text-center">Paiement</th>
                 <th className="p-3.5 text-right font-mono">Reste Dû</th>
                 <th className="p-3.5 text-center">Actions</th>
@@ -230,10 +230,10 @@ export const OrdersView: React.FC = () => {
                             {firstItem.finishType === 'thermolaquage_ral' && (
                               <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-bold text-amber-400">
                                 <span
-                                  className="w-2 h-2 rounded-full"
-                                  style={{ backgroundColor: firstItem.ralHex || '#383E42' }}
+                                  className="w-2 h-2 rounded-full border border-white/20"
+                                  style={{ backgroundColor: firstItem.bpcHex || firstItem.ralHex || '#2E353B' }}
                                 />
-                                {firstItem.ralCode}
+                                {firstItem.bpcCode || firstItem.ralCode}
                               </span>
                             )}
                           </div>

@@ -185,16 +185,16 @@ export const WorkshopCuttingSheet: React.FC<WorkshopCuttingSheetProps> = ({ orde
 
           <div className="grid grid-cols-3 gap-3 p-3.5 rounded-lg border border-amber-300 bg-amber-50/50 text-xs">
             <div>
-              <span className="text-amber-800 text-[10px] block font-bold">Finition Demandée :</span>
+              <span className="text-amber-800 text-[10px] block font-bold">Finition / Teinte BPC :</span>
               <span className="font-black text-slate-900 text-sm">
-                {item.finishType === 'thermolaquage_ral' ? item.ralCode : 'Brut Galvanisé'}
+                {item.finishType === 'thermolaquage_ral' ? (item.bpcCode || item.ralCode) : 'Brut Galvanisé'}
               </span>
-              <span className="block text-slate-600">{item.ralName || 'Sans Peinture'}</span>
+              <span className="block text-slate-600">{item.bpcName || item.ralName || 'Sans Peinture'}</span>
             </div>
             <div>
               <span className="text-amber-800 text-[10px] block font-bold">Aspect & Texture :</span>
-              <span className="font-bold text-slate-900 capitalize">{item.ralTexture || 'Standard'}</span>
-              <span className="block text-slate-600">Poudre Époxy-Polyester certifiée</span>
+              <span className="font-bold text-slate-900 capitalize">{item.bpcTexture || item.ralTexture || 'Standard'}</span>
+              <span className="block text-slate-600">Poudre BPC BPCOAT-PE certifiée</span>
             </div>
             <div>
               <span className="text-amber-800 text-[10px] block font-bold">Cycle de Cuisson :</span>
@@ -246,7 +246,7 @@ export const WorkshopCuttingSheet: React.FC<WorkshopCuttingSheetProps> = ({ orde
           <div className="p-3 bg-slate-50 border border-slate-300 rounded-lg">
             <span className="font-bold text-slate-900 block mb-2">2. Peinture / Four</span>
             <div className="text-slate-500 text-[11px] space-y-1">
-              <div>[  ] Teinte RAL conforme</div>
+              <div>[  ] Teinte BPC conforme</div>
               <div>[  ] Cuisson 200°C effectuée</div>
               <div className="pt-2 text-slate-400">Signature : ___________</div>
             </div>

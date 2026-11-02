@@ -2,11 +2,12 @@ import { create } from 'zustand'
 import { Client } from '../types/client'
 import { Order, ProductionStage, PaymentEntry, DocumentType, PaymentStatus } from '../types/order'
 import { InventoryItem } from '../types/inventory'
-import { ShutterItem } from '../types/shutter'
+import { ShutterItem, BpcColor, SlatType, MotorType } from '../types/shutter'
 import { InstallationJob, InstallationTeam } from '../types/installation'
 import { SiteSurvey } from '../types/survey'
 import { Supplier, PurchaseOrder } from '../types/supplier'
 import { SavTicket } from '../types/sav'
+import { INITIAL_BPC_COLORS } from '../utils/bpcColors'
 import {
   INITIAL_CLIENTS,
   INITIAL_ORDERS,
@@ -19,6 +20,23 @@ import {
   INITIAL_SAV_TICKETS,
 } from '../utils/sampleData'
 
+export const DEFAULT_SLAT_PRICES: Record<SlatType, number> = {
+  lame_pleine_8_10: 6500,
+  lame_pleine_10_10: 8200,
+  lame_microperforee: 9400,
+  lame_cobra: 11000,
+  lame_alu_isolee: 14500,
+  lame_alu_extrude: 17500,
+}
+
+export const DEFAULT_MOTOR_PRICES: Record<MotorType, number> = {
+  manuel: 5000,
+  central_mono: 28000,
+  central_bi: 42000,
+  tubulaire: 32000,
+  lateral_industriel: 85000,
+}
+
 export type ERPView = 
   | 'dashboard' 
   | 'configurator' 
@@ -28,6 +46,7 @@ export type ERPView =
   | 'surveys'
   | 'suppliers'
   | 'sav'
+  | 'pricing'
   | 'clients' 
   | 'inventory' 
   | 'finance' 
@@ -98,13 +117,24 @@ interface ERPStoreState {
   updateSavTicket: (id: string, updates: Partial<SavTicket>) => void
   resolveSavTicket: (id: string, resolutionNotes: string, partsReplaced?: string, invoicedCost?: number) => void
   
+  // Actions Tarification & Catalogue BPC
+  bpcColors: BpcColor[]
+  slatPrices: Record<SlatType, number>
+  motorPrices: Record<MotorType, number>
+  addBpcColor: (color: Omit<BpcColor, 'id'>) => BpcColor
+  updateBpcColor: (id: string, updates: Partial<BpcColor>) => void
+  deleteBpcColor: (id: string) => void
+  updateSlatPrice: (type: SlatType, price: number) => void
+  updateMotorPrice: (type: MotorType, price: number) => void
+  resetPricingToDefaults: () => void
+
   // Sauvegarde & Restauration
   exportDataJson: () => string
   importDataJson: (jsonString: string) => boolean
   resetToSampleData: () => void
 }
 
-const STORAGE_KEY = 'perfect_metal_erp_state_v2'
+const STORAGE_KEY = 'perfect_metal_erp_state_v3'
 
 interface PersistentStateData {
   clients: Client[]
@@ -116,6 +146,9 @@ interface PersistentStateData {
   suppliers: Supplier[]
   purchases: PurchaseOrder[]
   savTickets: SavTicket[]
+  bpcColors: BpcColor[]
+  slatPrices: Record<SlatType, number>
+  motorPrices: Record<MotorType, number>
 }
 
 function loadSavedState(): PersistentStateData {
@@ -134,6 +167,9 @@ function loadSavedState(): PersistentStateData {
           suppliers: parsed.suppliers || INITIAL_SUPPLIERS,
           purchases: parsed.purchases || INITIAL_PURCHASES,
           savTickets: parsed.savTickets || INITIAL_SAV_TICKETS,
+          bpcColors: parsed.bpcColors || INITIAL_BPC_COLORS,
+          slatPrices: parsed.slatPrices || DEFAULT_SLAT_PRICES,
+          motorPrices: parsed.motorPrices || DEFAULT_MOTOR_PRICES,
         }
       }
     }
@@ -150,6 +186,9 @@ function loadSavedState(): PersistentStateData {
     suppliers: INITIAL_SUPPLIERS,
     purchases: INITIAL_PURCHASES,
     savTickets: INITIAL_SAV_TICKETS,
+    bpcColors: INITIAL_BPC_COLORS,
+    slatPrices: DEFAULT_SLAT_PRICES,
+    motorPrices: DEFAULT_MOTOR_PRICES,
   }
 }
 
@@ -180,6 +219,9 @@ export const useERPStore = create<ERPStoreState>((set, get) => ({
   suppliers: initialLoaded.suppliers,
   purchases: initialLoaded.purchases,
   savTickets: initialLoaded.savTickets,
+  bpcColors: initialLoaded.bpcColors,
+  slatPrices: initialLoaded.slatPrices,
+  motorPrices: initialLoaded.motorPrices,
 
   selectedOrderIdForPrint: null,
   setSelectedOrderIdForPrint: (id) => set({ selectedOrderIdForPrint: id }),
@@ -234,8 +276,8 @@ export const useERPStore = create<ERPStoreState>((set, get) => ({
     const totalHT = orderData.items.reduce((sum, item) => sum + item.unitPriceHT * (item.quantity || 1), 0)
     const discountAmount = orderData.discountAmount || 0
     const netHT = Math.max(0, totalHT - discountAmount)
-    const vatAmount = Math.round(netHT * 0.19)
-    const totalTTC = netHT + vatAmount
+    const vatAmount = 0
+    const totalTTC = netHT
 
     const newOrder: Order = {
       id: `ord-${Date.now()}`,
@@ -658,6 +700,59 @@ export const useERPStore = create<ERPStoreState>((set, get) => ({
     persistState({ ...get(), savTickets: updated })
   },
 
+  // ── Tarification & Catalogue BPC ──
+  addBpcColor: (colorData) => {
+    const bpcColors = get().bpcColors
+    const newColor: BpcColor = {
+      ...colorData,
+      id: `bpc-${Date.now()}`,
+    }
+    const updated = [newColor, ...bpcColors]
+    set({ bpcColors: updated })
+    persistState({ ...get(), bpcColors: updated })
+    return newColor
+  },
+
+  updateBpcColor: (id, updates) => {
+    const updated = get().bpcColors.map((c) =>
+      c.id === id ? { ...c, ...updates } : c
+    )
+    set({ bpcColors: updated })
+    persistState({ ...get(), bpcColors: updated })
+  },
+
+  deleteBpcColor: (id) => {
+    const updated = get().bpcColors.filter((c) => c.id !== id)
+    set({ bpcColors: updated })
+    persistState({ ...get(), bpcColors: updated })
+  },
+
+  updateSlatPrice: (type, price) => {
+    const updated = { ...get().slatPrices, [type]: price }
+    set({ slatPrices: updated })
+    persistState({ ...get(), slatPrices: updated })
+  },
+
+  updateMotorPrice: (type, price) => {
+    const updated = { ...get().motorPrices, [type]: price }
+    set({ motorPrices: updated })
+    persistState({ ...get(), motorPrices: updated })
+  },
+
+  resetPricingToDefaults: () => {
+    set({
+      bpcColors: INITIAL_BPC_COLORS,
+      slatPrices: DEFAULT_SLAT_PRICES,
+      motorPrices: DEFAULT_MOTOR_PRICES,
+    })
+    persistState({
+      ...get(),
+      bpcColors: INITIAL_BPC_COLORS,
+      slatPrices: DEFAULT_SLAT_PRICES,
+      motorPrices: DEFAULT_MOTOR_PRICES,
+    })
+  },
+
   // ── Sauvegardes & Restauration ──
   exportDataJson: () => {
     const data = {
@@ -670,6 +765,9 @@ export const useERPStore = create<ERPStoreState>((set, get) => ({
       suppliers: get().suppliers,
       purchases: get().purchases,
       savTickets: get().savTickets,
+      bpcColors: get().bpcColors,
+      slatPrices: get().slatPrices,
+      motorPrices: get().motorPrices,
       exportedAt: new Date().toISOString(),
       appName: 'PERFECT METAL ERP',
     }
@@ -680,7 +778,7 @@ export const useERPStore = create<ERPStoreState>((set, get) => ({
     try {
       const parsed = JSON.parse(jsonString)
       if (Array.isArray(parsed.clients) && Array.isArray(parsed.orders) && Array.isArray(parsed.inventory)) {
-        set({
+        const freshState = {
           clients: parsed.clients,
           orders: parsed.orders,
           inventory: parsed.inventory,
@@ -690,18 +788,12 @@ export const useERPStore = create<ERPStoreState>((set, get) => ({
           suppliers: parsed.suppliers || INITIAL_SUPPLIERS,
           purchases: parsed.purchases || INITIAL_PURCHASES,
           savTickets: parsed.savTickets || INITIAL_SAV_TICKETS,
-        })
-        persistState({
-          clients: parsed.clients,
-          orders: parsed.orders,
-          inventory: parsed.inventory,
-          teams: parsed.teams || INITIAL_TEAMS,
-          installations: parsed.installations || INITIAL_INSTALLATIONS,
-          surveys: parsed.surveys || INITIAL_SURVEYS,
-          suppliers: parsed.suppliers || INITIAL_SUPPLIERS,
-          purchases: parsed.purchases || INITIAL_PURCHASES,
-          savTickets: parsed.savTickets || INITIAL_SAV_TICKETS,
-        })
+          bpcColors: parsed.bpcColors || INITIAL_BPC_COLORS,
+          slatPrices: parsed.slatPrices || DEFAULT_SLAT_PRICES,
+          motorPrices: parsed.motorPrices || DEFAULT_MOTOR_PRICES,
+        }
+        set(freshState)
+        persistState(freshState)
         return true
       }
     } catch (e) {
@@ -721,6 +813,9 @@ export const useERPStore = create<ERPStoreState>((set, get) => ({
       suppliers: INITIAL_SUPPLIERS,
       purchases: INITIAL_PURCHASES,
       savTickets: INITIAL_SAV_TICKETS,
+      bpcColors: INITIAL_BPC_COLORS,
+      slatPrices: DEFAULT_SLAT_PRICES,
+      motorPrices: DEFAULT_MOTOR_PRICES,
     }
     set(freshData)
     persistState(freshData)

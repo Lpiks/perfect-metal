@@ -17,6 +17,21 @@ export type FinishType = 'brut_galva' | 'thermolaquage_ral'
 
 export type RalTexture = 'brillant' | 'satine' | 'mat' | 'sable'
 
+export type BpcTexture = 'sable' | 'mat' | 'satine' | 'brillant' | 'martele' | 'metallise'
+
+export interface BpcColor {
+  id: string
+  code: string          // e.g. "BPC 7016 Sablé"
+  ralReference: string  // e.g. "7016"
+  name: string          // e.g. "Gris Anthracite Sablé Texturé (Qualicoat)"
+  hex: string           // e.g. "#2E3438"
+  texture: BpcTexture
+  series?: string       // e.g. "BPCOAT-PE"
+  pricePerM2Dzd: number // Plus-value ou tarif poudre/m² (DZD)
+  inStock: boolean
+  isPopular?: boolean
+}
+
 export interface RalColor {
   code: string // e.g. "RAL 7016"
   name: string // e.g. "Gris Anthracite"
@@ -59,9 +74,14 @@ export interface ShutterItem {
   motorBrand?: string     // ex: "ACM Italy", "Somfy", "Titan"
   motorTorqueNm: number   // Couple calculé en Nm
   
-  // Finition & Peinture
+  // Finition & Peinture (BPC Boyasan Algérie)
   finishType: FinishType
-  ralCode?: string        // ex: "RAL 7016"
+  bpcColorId?: string
+  bpcCode?: string        // ex: "BPC 7016 Sablé"
+  bpcName?: string
+  bpcHex?: string
+  bpcTexture?: BpcTexture
+  ralCode?: string        // ex: "RAL 7016" (référence base)
   ralName?: string
   ralHex?: string
   ralTexture?: RalTexture

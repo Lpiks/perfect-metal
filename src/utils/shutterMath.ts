@@ -60,6 +60,9 @@ export interface DimensioningParams {
   finishType: FinishType
   accessories: ShutterAccessories
   customMarginPercent?: number
+  customSlatPricePerM2?: number
+  customBpcSurchargePerM2?: number
+  customMotorPrices?: Partial<Record<MotorType, number>>
 }
 
 export interface CalculationResult {
@@ -152,36 +155,30 @@ export function calculateShutter(params: DimensioningParams): CalculationResult 
   }
 
   // 7. Chiffrage Financier Déterministe (DZD)
-  // Coût matière première (acier galvanisé / alu)
-  const rawMaterialCost = Math.round(surfaceM2 * slat.basePricePerM2Dzd)
+  // Coût matière première (acier galvanisé / alu) basé sur prix catalogue ou personnalisé
+  const baseSlatPrice = params.customSlatPricePerM2 ?? slat.basePricePerM2Dzd
+  const rawMaterialCost = Math.round(surfaceM2 * baseSlatPrice)
 
-  // Coût thermolaquage au four (peinture époxy-polyester cuite à 200°C)
+  // Coût thermolaquage au four BPC (peinture polyester/époxy cuite à 200°C)
   // Surface développée = 2 faces tablier + coulisses (approx. surfaceM2 * 2.2)
   let powderCoatingCost = 0
   if (finishType === 'thermolaquage_ral') {
     const developedPaintSurfaceM2 = surfaceM2 * 2.2
-    const pricePerM2PowderDzd = 2800 // Poudre + dégraissage + cabine + cuisson au four
-    powderCoatingCost = Math.round(developedPaintSurfaceM2 * pricePerM2PowderDzd)
+    const basePowderPrice = 2800 // Base BPC application + dégraissage + cabine + cuisson four
+    const colorSurcharge = params.customBpcSurchargePerM2 ?? 0 // Plus-value teinte spéciale (Sablé, Métallisé)
+    powderCoatingCost = Math.round(developedPaintSurfaceM2 * (basePowderPrice + colorSurcharge))
   }
 
   // Coût motorisation et accessoires
   let motorAccessoriesCost = 0
-  switch (recommendedMotor) {
-    case 'central_mono':
-      motorAccessoriesCost += 28000 // Moteur central 170-180 Nm avec électrofrein
-      break
-    case 'central_bi':
-      motorAccessoriesCost += 42000 // Moteur bi-moteur 360-420 Nm
-      break
-    case 'lateral_industriel':
-      motorAccessoriesCost += 85000 // Moteur latéral triphasé + parachute de sécurité
-      break
-    case 'tubulaire':
-      motorAccessoriesCost += 32000
-      break
-    default:
-      motorAccessoriesCost += 5000 // Boîtes à ressorts et quincaillerie manuelle
+  const motorRates = {
+    manuel: params.customMotorPrices?.manuel ?? 5000,
+    central_mono: params.customMotorPrices?.central_mono ?? 28000,
+    central_bi: params.customMotorPrices?.central_bi ?? 42000,
+    lateral_industriel: params.customMotorPrices?.lateral_industriel ?? 85000,
+    tubulaire: params.customMotorPrices?.tubulaire ?? 32000,
   }
+  motorAccessoriesCost += motorRates[recommendedMotor] || 5000
 
   // Quincaillerie supplémentaire
   if (accessories.serrureCentrale) motorAccessoriesCost += 4500
@@ -197,12 +194,12 @@ export function calculateShutter(params: DimensioningParams): CalculationResult 
 
   // Marge commerciale appliquée (30%)
   const directCost = rawMaterialCost + powderCoatingCost + motorAccessoriesCost + laborFabricationCost
-  const marginMultiplier = 1.30
+  const marginMultiplier = params.customMarginPercent ? 1 + params.customMarginPercent / 100 : 1.30
   const unitPriceHT = Math.round(directCost * marginMultiplier)
 
-  // TVA standard 19%
-  const vatAmount = Math.round(unitPriceHT * 0.19)
-  const unitPriceTTC = unitPriceHT + vatAmount
+  // SANS TVA (Exonération / Régime forfaitaire IFU - TVA 0%)
+  const vatAmount = 0
+  const unitPriceTTC = unitPriceHT
 
   return {
     widthTotalMm,

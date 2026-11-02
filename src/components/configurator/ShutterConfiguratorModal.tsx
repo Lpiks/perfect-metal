@@ -3,12 +3,11 @@ import { CustomModal } from '../ui/CustomModal'
 import { CustomInput } from '../ui/CustomInput'
 import { CustomSelect } from '../ui/CustomSelect'
 import { ShutterPreview2D } from './ShutterPreview2D'
-import { SlatType, FinishType, RalTexture, ShutterAccessories, ShutterItem } from '../../types/shutter'
+import { SlatType, FinishType, ShutterAccessories, ShutterItem } from '../../types/shutter'
 import { calculateShutter, SLAT_CATALOG } from '../../utils/shutterMath'
-import { POPULAR_RAL_COLORS } from '../../utils/ralColors'
 import { formatDZD } from '../../utils/currency'
 import { useERPStore } from '../../store/erpStore'
-import { Shield, Settings, Sliders, Check, Plus } from 'lucide-react'
+import { Shield, Settings, Sliders, Check, Plus, Palette } from 'lucide-react'
 
 interface ShutterConfiguratorModalProps {
   isOpen: boolean
@@ -21,7 +20,7 @@ export const ShutterConfiguratorModal: React.FC<ShutterConfiguratorModalProps> =
   onClose,
   onSuccess,
 }) => {
-  const { clients, createOrder } = useERPStore()
+  const { clients, createOrder, bpcColors, slatPrices, motorPrices } = useERPStore()
 
   // 1. Client & Projet
   const [selectedClientId, setSelectedClientId] = useState<string>(clients[0]?.id || '')
@@ -33,11 +32,10 @@ export const ShutterConfiguratorModal: React.FC<ShutterConfiguratorModalProps> =
   const [widthClearMm, setWidthClearMm] = useState<number>(3200)
   const [heightClearMm, setHeightClearMm] = useState<number>(2600)
 
-  // 3. Type de Lame & Finition
+  // 3. Type de Lame & Finition BPC
   const [slatType, setSlatType] = useState<SlatType>('lame_pleine_8_10')
   const [finishType, setFinishType] = useState<FinishType>('thermolaquage_ral')
-  const [selectedRalCode, setSelectedRalCode] = useState('RAL 7016')
-  const [ralTexture, setRalTexture] = useState<RalTexture>('sable')
+  const [selectedBpcColorId, setSelectedBpcColorId] = useState<string>(bpcColors[0]?.id || 'bpc-7016-sable')
 
   // 4. Accessoires
   const [accessories, setAccessories] = useState<ShutterAccessories>({
@@ -55,13 +53,13 @@ export const ShutterConfiguratorModal: React.FC<ShutterConfiguratorModalProps> =
   // Quantité
   const [quantity, setQuantity] = useState<number>(1)
 
-  // Objet RAL sélectionné
-  const activeRal = useMemo(
-    () => POPULAR_RAL_COLORS.find((c) => c.code === selectedRalCode) || POPULAR_RAL_COLORS[0],
-    [selectedRalCode]
+  // Objet BPC sélectionné
+  const activeBpc = useMemo(
+    () => bpcColors.find((c) => c.id === selectedBpcColorId) || bpcColors[0],
+    [bpcColors, selectedBpcColorId]
   )
 
-  // Calculs techniques en temps réel
+  // Calculs techniques en temps réel avec tarifs dynamiques et BPC surcharge
   const calculations = useMemo(() => {
     return calculateShutter({
       widthClearMm,
@@ -69,8 +67,11 @@ export const ShutterConfiguratorModal: React.FC<ShutterConfiguratorModalProps> =
       slatType,
       finishType,
       accessories,
+      customSlatPricePerM2: slatPrices[slatType],
+      customBpcSurchargePerM2: finishType === 'thermolaquage_ral' ? (activeBpc?.pricePerM2Dzd || 0) : 0,
+      customMotorPrices: motorPrices,
     })
-  }, [widthClearMm, heightClearMm, slatType, finishType, accessories])
+  }, [widthClearMm, heightClearMm, slatType, finishType, accessories, slatPrices, activeBpc, motorPrices])
 
   // Options pour le sélecteur client
   const clientOptions = useMemo(
@@ -83,15 +84,18 @@ export const ShutterConfiguratorModal: React.FC<ShutterConfiguratorModalProps> =
     [clients]
   )
 
-  // Options pour type de lame
+  // Options pour type de lame avec prix au m² réel
   const slatOptions = useMemo(
     () =>
-      Object.entries(SLAT_CATALOG).map(([key, item]) => ({
-        value: key,
-        label: item.name,
-        subtitle: `${item.thicknessMm} mm • ${item.weightPerM2Kg} kg/m²`,
-      })),
-    []
+      Object.entries(SLAT_CATALOG).map(([key, item]) => {
+        const customPrice = slatPrices[key as SlatType] || item.basePricePerM2Dzd
+        return {
+          value: key,
+          label: `${item.name} (${formatDZD(customPrice)}/m²)`,
+          subtitle: `${item.thicknessMm} mm • ${item.weightPerM2Kg} kg/m²`,
+        }
+      }),
+    [slatPrices]
   )
 
   const handleSubmit = () => {
@@ -121,10 +125,15 @@ export const ShutterConfiguratorModal: React.FC<ShutterConfiguratorModalProps> =
           : 'Manuel (Ressorts)',
       motorTorqueNm: calculations.motorTorqueNm,
       finishType,
-      ralCode: finishType === 'thermolaquage_ral' ? activeRal.code : undefined,
-      ralName: finishType === 'thermolaquage_ral' ? activeRal.name : undefined,
-      ralHex: finishType === 'thermolaquage_ral' ? activeRal.hex : undefined,
-      ralTexture: finishType === 'thermolaquage_ral' ? ralTexture : undefined,
+      bpcColorId: finishType === 'thermolaquage_ral' ? activeBpc?.id : undefined,
+      bpcCode: finishType === 'thermolaquage_ral' ? activeBpc?.code : undefined,
+      bpcName: finishType === 'thermolaquage_ral' ? activeBpc?.name : undefined,
+      bpcHex: finishType === 'thermolaquage_ral' ? activeBpc?.hex : undefined,
+      bpcTexture: finishType === 'thermolaquage_ral' ? activeBpc?.texture : undefined,
+      ralCode: finishType === 'thermolaquage_ral' ? activeBpc?.code : undefined,
+      ralName: finishType === 'thermolaquage_ral' ? activeBpc?.name : undefined,
+      ralHex: finishType === 'thermolaquage_ral' ? activeBpc?.hex : undefined,
+      ralTexture: finishType === 'thermolaquage_ral' ? (activeBpc?.texture === 'sable' ? 'sable' : activeBpc?.texture === 'mat' ? 'mat' : 'satine') : undefined,
       accessories,
       surfaceM2: calculations.surfaceM2,
       curtainWeightKg: calculations.curtainWeightKg,
@@ -139,10 +148,10 @@ export const ShutterConfiguratorModal: React.FC<ShutterConfiguratorModalProps> =
       laborFabricationCost: calculations.laborFabricationCost,
       installationCost: 15000,
       unitPriceHT: calculations.unitPriceHT,
-      vatRate: 19,
-      unitPriceTTC: calculations.unitPriceTTC,
+      vatRate: 0,
+      unitPriceTTC: calculations.unitPriceHT,
       quantity,
-      totalTTC: calculations.unitPriceTTC * quantity,
+      totalTTC: calculations.unitPriceHT * quantity,
     }
 
     createOrder({
@@ -161,14 +170,14 @@ export const ShutterConfiguratorModal: React.FC<ShutterConfiguratorModalProps> =
       isOpen={isOpen}
       onClose={onClose}
       title="Configurateur Industriel de Rideaux Métalliques"
-      subtitle="Chiffrage technique déterministe, dimensionnement moteur & thermolaquage RAL"
+      subtitle="Chiffrage technique déterministe, dimensionnement moteur & thermolaquage BPC Algérie"
       maxWidth="5xl"
       footer={
         <div className="flex items-center justify-between w-full">
           <div className="flex flex-col">
-            <span className="text-[11px] text-slate-400">Total Unitaire TTC</span>
+            <span className="text-[11px] text-slate-400">Total Net Unitaire (Sans TVA)</span>
             <span className="text-xl font-bold font-mono text-sky-400">
-              {formatDZD(calculations.unitPriceTTC * quantity)}
+              {formatDZD(calculations.unitPriceHT * quantity)}
             </span>
           </div>
 
@@ -318,58 +327,77 @@ export const ShutterConfiguratorModal: React.FC<ShutterConfiguratorModalProps> =
                       : 'border-slate-800 text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  Thermolaqué RAL
+                  Thermolaqué BPC (Boyasan)
                 </button>
               </div>
             </div>
 
             {finishType === 'thermolaquage_ral' && (
               <div className="space-y-3 pt-1">
-                <label className="text-xs font-medium text-slate-300">
-                  Nuancier RAL Populaire (Sélection Rapide) :
-                </label>
-                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                  {POPULAR_RAL_COLORS.map((ral) => {
-                    const isSelected = selectedRalCode === ral.code
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <Palette size={13} className="text-sky-400" />
+                    Catalogue Teintes BPC Algérie ({bpcColors.length} teintes disponibles) :
+                  </label>
+                  {activeBpc && (
+                    <span className="text-[11px] font-mono text-sky-300">
+                      {activeBpc.pricePerM2Dzd > 0 ? `+${formatDZD(activeBpc.pricePerM2Dzd)}/m²` : 'Sans plus-value'}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-56 overflow-y-auto pr-1">
+                  {bpcColors.map((color) => {
+                    const isSelected = selectedBpcColorId === color.id
                     return (
                       <button
-                        key={ral.code}
+                        key={color.id}
                         type="button"
-                        onClick={() => setSelectedRalCode(ral.code)}
-                        className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                        onClick={() => setSelectedBpcColorId(color.id)}
+                        className={`p-2 rounded-xl border flex items-center gap-2.5 transition-all cursor-pointer text-left ${
                           isSelected
                             ? 'border-sky-400 bg-sky-500/15 shadow-[0_0_12px_rgba(14,165,233,0.3)] ring-1 ring-sky-400'
                             : 'border-slate-800 bg-[#0E131F] hover:border-slate-700'
                         }`}
                       >
                         <span
-                          className="w-5 h-5 rounded-md border border-white/20 shadow-sm"
-                          style={{ backgroundColor: ral.hex }}
+                          className="w-6 h-6 rounded-lg border border-white/20 shadow-sm shrink-0"
+                          style={{ backgroundColor: color.hex }}
                         />
-                        <span className="text-[10px] font-bold text-slate-200">{ral.code}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[11px] font-bold text-slate-200 truncate">
+                            {color.code}
+                          </div>
+                          <div className="text-[9px] text-slate-400 flex items-center justify-between gap-1">
+                            <span className="capitalize truncate">{color.texture}</span>
+                            {color.pricePerM2Dzd > 0 && (
+                              <span className="text-amber-400 font-mono shrink-0">
+                                +{color.pricePerM2Dzd}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </button>
                     )
                   })}
                 </div>
 
-                {/* Texture Selector */}
-                <div className="flex items-center gap-2 pt-1">
-                  <span className="text-xs text-slate-400">Texture du four :</span>
-                  {(['sable', 'mat', 'brillant', 'satine'] as RalTexture[]).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setRalTexture(t)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium capitalize cursor-pointer transition-colors border ${
-                        ralTexture === t
-                          ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                          : 'border-slate-800 text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
+                {activeBpc && (
+                  <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className="w-4 h-4 rounded-full border border-white/30 shrink-0"
+                        style={{ backgroundColor: activeBpc.hex }}
+                      />
+                      <span className="text-slate-300 font-medium">
+                        Sélection : <strong className="text-white">{activeBpc.name}</strong> ({activeBpc.series})
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                      {activeBpc.texture}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -512,8 +540,8 @@ export const ShutterConfiguratorModal: React.FC<ShutterConfiguratorModalProps> =
             heightMm={heightClearMm}
             slatType={slatType}
             finishType={finishType}
-            ralHex={activeRal.hex}
-            ralCode={activeRal.code}
+            ralHex={activeBpc?.hex || '#2E353B'}
+            ralCode={activeBpc?.code || 'BPC 7016'}
             motorType={calculations.recommendedMotor}
             hasLock={accessories.serrureCentrale}
             hasBox={accessories.caissonCoffre}
@@ -552,16 +580,16 @@ export const ShutterConfiguratorModal: React.FC<ShutterConfiguratorModalProps> =
             </div>
           </div>
 
-          {/* Décomposition des Coûts (ERP Transparency) */}
+          {/* Décomposition des Coûts (ERP Transparency - TVA 0%) */}
           <div className="p-4 rounded-xl bg-[#0B0F1A] border border-slate-800 text-xs space-y-2 flex-1">
-            <span className="font-semibold text-slate-300 block mb-2">Décomposition du Chiffrage</span>
+            <span className="font-semibold text-slate-300 block mb-2">Décomposition du Chiffrage (Net)</span>
             <div className="space-y-1.5 text-[11px]">
               <div className="flex justify-between text-slate-400">
                 <span>Matière Première (Tablier) :</span>
                 <span className="font-mono">{formatDZD(calculations.rawMaterialCost)}</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Thermolaquage au Four :</span>
+                <span>Thermolaquage Four BPC :</span>
                 <span className="font-mono">{formatDZD(calculations.powderCoatingCost)}</span>
               </div>
               <div className="flex justify-between text-slate-400">
@@ -572,17 +600,9 @@ export const ShutterConfiguratorModal: React.FC<ShutterConfiguratorModalProps> =
                 <span>Fabrication & Assemblage :</span>
                 <span className="font-mono">{formatDZD(calculations.laborFabricationCost)}</span>
               </div>
-              <div className="pt-2 border-t border-slate-800 flex justify-between font-semibold text-slate-200">
-                <span>Prix Total HT :</span>
-                <span className="font-mono text-slate-100">{formatDZD(calculations.unitPriceHT)}</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>TVA (19%) :</span>
-                <span className="font-mono">{formatDZD(calculations.vatAmount)}</span>
-              </div>
-              <div className="pt-1 flex justify-between font-bold text-sm text-sky-400">
-                <span>Net TTC :</span>
-                <span className="font-mono">{formatDZD(calculations.unitPriceTTC)}</span>
+              <div className="pt-2 border-t border-slate-800 flex justify-between font-bold text-sm text-sky-400">
+                <span>Prix Net Total (Sans TVA) :</span>
+                <span className="font-mono">{formatDZD(calculations.unitPriceHT)}</span>
               </div>
             </div>
           </div>

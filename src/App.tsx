@@ -14,6 +14,7 @@ import { InventoryView } from './components/inventory/InventoryView'
 import { SavView } from './components/sav/SavView'
 import { FinanceView } from './components/finance/FinanceView'
 import { SettingsView } from './components/settings/SettingsView'
+import { PricingManagerView } from './components/pricing/PricingManagerView'
 import { ShutterConfiguratorModal } from './components/configurator/ShutterConfiguratorModal'
 
 export const App: React.FC = () => {
@@ -32,6 +33,8 @@ export const App: React.FC = () => {
         return <SurveysView />
       case 'orders':
         return <OrdersView />
+      case 'pricing':
+        return <PricingManagerView />
       case 'clients':
         return <ClientsView />
       case 'suppliers':

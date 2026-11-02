@@ -13,6 +13,7 @@ import {
   Ruler,
   Factory,
   LifeBuoy,
+  Palette,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -48,6 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenConfigurator }) => {
     },
     { id: 'surveys', label: 'Métré & Cotes', icon: <Ruler size={17} /> },
     { id: 'orders', label: 'Commandes & Devis', icon: <FileText size={17} /> },
+    { id: 'pricing', label: 'Tarifs & Couleurs BPC', icon: <Palette size={17} /> },
     { id: 'clients', label: 'Clients & Créances', icon: <Users size={17} /> },
     {
       id: 'suppliers',
@@ -56,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenConfigurator }) => {
     },
     {
       id: 'inventory',
-      label: 'Stocks & Poudres RAL',
+      label: 'Stocks & Poudres BPC',
       icon: <Boxes size={17} />,
       badge: criticalStockCount > 0 ? '!' : undefined,
       badgeColor: 'bg-rose-500 text-white',

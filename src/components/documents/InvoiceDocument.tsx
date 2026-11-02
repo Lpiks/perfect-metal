@@ -124,10 +124,10 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ order, onBack 
                 <tr>
                   <th className="p-3 text-left">Désignation & Spécifications Techniques</th>
                   <th className="p-3 text-center">Dimensions</th>
-                  <th className="p-3 text-center">Finition / RAL</th>
+                  <th className="p-3 text-center">Finition / Teinte BPC</th>
                   <th className="p-3 text-center">Qté</th>
-                  <th className="p-3 text-right font-mono">P.U HT (DZD)</th>
-                  <th className="p-3 text-right font-mono">Total HT (DZD)</th>
+                  <th className="p-3 text-right font-mono">P.U Net (DZD)</th>
+                  <th className="p-3 text-right font-mono">Total Net (DZD)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -166,9 +166,9 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ order, onBack 
                         <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 border border-slate-300 font-bold text-slate-900">
                           <span
                             className="w-2.5 h-2.5 rounded-full border border-slate-400"
-                            style={{ backgroundColor: item.ralHex || '#383E42' }}
+                            style={{ backgroundColor: item.bpcHex || item.ralHex || '#2E353B' }}
                           />
-                          <span>{item.ralCode}</span>
+                          <span>{item.bpcCode || item.ralCode}</span>
                         </div>
                       ) : (
                         <span className="text-slate-600 font-semibold">Galva Brut</span>
@@ -241,7 +241,7 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ order, onBack 
             {/* Récapitulatif Financier (Droite) */}
             <div className="col-span-5 bg-slate-50 p-4 rounded-xl border border-slate-300 text-xs space-y-2">
               <div className="flex justify-between text-slate-600">
-                <span>Total Brut HT :</span>
+                <span>Total Brut :</span>
                 <span className="font-mono">{formatDZD(order.totalHT)}</span>
               </div>
 
@@ -253,17 +253,17 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ order, onBack 
               )}
 
               <div className="flex justify-between font-bold text-slate-900 border-t border-slate-200 pt-2">
-                <span>Net Commercial HT :</span>
+                <span>Net Commercial :</span>
                 <span className="font-mono">{formatDZD(order.netHT)}</span>
               </div>
 
-              <div className="flex justify-between text-slate-600">
-                <span>TVA (19%) :</span>
-                <span className="font-mono">{formatDZD(order.vatAmount)}</span>
+              <div className="flex justify-between text-[11px] text-slate-500 italic">
+                <span>TVA (Régime Forfaitaire) :</span>
+                <span className="font-mono font-medium">Exonéré / Non applicable</span>
               </div>
 
               <div className="flex justify-between font-black text-base text-slate-900 border-t-2 border-slate-900 pt-2">
-                <span>NET À PAYER TTC :</span>
+                <span>TOTAL NET À PAYER :</span>
                 <span className="font-mono text-sky-900">{formatDZD(order.totalTTC)}</span>
               </div>
 

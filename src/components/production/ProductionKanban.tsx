@@ -222,9 +222,9 @@ export const ProductionKanban: React.FC = () => {
                                 <span className="flex items-center gap-1 font-bold text-amber-400 shrink-0">
                                   <span
                                     className="w-2 h-2 rounded-full border border-white/20 shrink-0"
-                                    style={{ backgroundColor: firstItem.ralHex || '#383E42' }}
+                                    style={{ backgroundColor: firstItem.bpcHex || firstItem.ralHex || '#2E353B' }}
                                   />
-                                  <span>{firstItem.ralCode}</span>
+                                  <span>{firstItem.bpcCode || firstItem.ralCode}</span>
                                 </span>
                               ) : (
                                 <span className="text-slate-400 font-mono shrink-0">Galva</span>

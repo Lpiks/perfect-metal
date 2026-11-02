@@ -93,7 +93,7 @@ export const InventoryView: React.FC = () => {
             Gestion des Stocks & Matières Premières Atelier
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Bobines acier, profilés, moteurs ACM, poudres thermolaquage RAL et accessoires de sécurité.
+            Bobines acier, profilés, moteurs ACM, poudres thermolaquage BPC (Boyasan) et accessoires de sécurité.
           </p>
         </div>
 

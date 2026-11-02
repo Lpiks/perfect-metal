@@ -221,39 +221,48 @@ export const DashboardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Aperçu Cabine Thermolaquage & Poudrage (4 cols) */}
+        {/* Aperçu Cabine Thermolaquage & Poudrage BPC (4 cols) */}
         <div className="lg:col-span-4 bg-[#0B0F1A] border border-slate-800/80 rounded-xl p-4 space-y-3 flex flex-col justify-between">
           <div>
-            <div className="border-b border-slate-800 pb-2.5 mb-2.5">
-              <h3 className="text-xs sm:text-sm font-bold text-slate-100 flex items-center gap-2">
-                <Flame size={15} className="text-amber-400" />
-                Spécialité Thermolaquage RAL
-              </h3>
-              <p className="text-[10px] text-slate-400">Nuances les plus demandées à l'usine</p>
+            <div className="border-b border-slate-800 pb-2.5 mb-2.5 flex items-center justify-between">
+              <div>
+                <h3 className="text-xs sm:text-sm font-bold text-slate-100 flex items-center gap-2">
+                  <Flame size={15} className="text-amber-400" />
+                  Thermolaquage BPC Algérie
+                </h3>
+                <p className="text-[10px] text-slate-400">Poudres Boyasan (Ouled Heddadj)</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCurrentView('pricing')}
+                className="text-[10px] text-sky-400 hover:text-sky-300 font-bold bg-sky-500/10 px-2 py-1 rounded-lg border border-sky-500/20 cursor-pointer"
+              >
+                Tarifs & Nuancier
+              </button>
             </div>
 
             <div className="space-y-1.5">
               {[
-                { code: 'RAL 7016', name: 'Gris Anthracite Sablé', hex: '#383E42', share: '45%' },
-                { code: 'RAL 9005', name: 'Noir Profond Mat', hex: '#111214', share: '25%' },
-                { code: 'RAL 9010', name: 'Blanc Pur Brillant', hex: '#F7F9FA', share: '15%' },
-                { code: 'RAL 8014', name: 'Brun Sépia Façade', hex: '#49392C', share: '10%' },
-              ].map((ral) => (
+                { code: 'BPC 7016 Sablé', name: 'Gris Anthracite Texturé', hex: '#2E353B', share: '45%' },
+                { code: 'BPC 9005 Sablé', name: 'Noir Profond Texturé', hex: '#141416', share: '25%' },
+                { code: 'BPC 9010 Brillant', name: 'Blanc Pur Brillant 85%', hex: '#F8FAFC', share: '15%' },
+                { code: 'BPC 8014 Sablé', name: 'Brun Sépia Texturé', hex: '#4A3A2C', share: '10%' },
+              ].map((bpc) => (
                 <div
-                  key={ral.code}
+                  key={bpc.code}
                   className="p-2 rounded-lg bg-[#0E1322] border border-slate-800 flex items-center justify-between text-xs"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span
                       className="w-3.5 h-3.5 rounded-md border border-white/20 shadow-sm shrink-0"
-                      style={{ backgroundColor: ral.hex }}
+                      style={{ backgroundColor: bpc.hex }}
                     />
                     <div className="min-w-0">
-                      <div className="font-bold text-slate-200 text-[11px] truncate">{ral.code}</div>
-                      <div className="text-[9px] text-slate-500 truncate">{ral.name}</div>
+                      <div className="font-bold text-slate-200 text-[11px] truncate">{bpc.code}</div>
+                      <div className="text-[9px] text-slate-500 truncate">{bpc.name}</div>
                     </div>
                   </div>
-                  <span className="font-mono text-xs font-bold text-sky-400 shrink-0">{ral.share}</span>
+                  <span className="font-mono text-xs font-bold text-sky-400 shrink-0">{bpc.share}</span>
                 </div>
               ))}
             </div>
