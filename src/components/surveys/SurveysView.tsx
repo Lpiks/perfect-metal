@@ -5,6 +5,7 @@ import { CustomModal } from '../ui/CustomModal'
 import { CustomInput } from '../ui/CustomInput'
 import { CustomSelect } from '../ui/CustomSelect'
 import { CustomDatePicker } from '../ui/CustomDatePicker'
+import { CustomConfirmModal } from '../ui/CustomConfirmModal'
 import {
   Ruler,
   Plus,
@@ -27,6 +28,7 @@ export const SurveysView: React.FC = () => {
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedSurveyForPrint, setSelectedSurveyForPrint] = useState<SiteSurvey | null>(null)
+  const [surveyToQuote, setSurveyToQuote] = useState<SiteSurvey | null>(null)
 
   // Form State
   const [clientId, setClientId] = useState<string>(clients[0]?.id || '')
@@ -216,9 +218,7 @@ export const SurveysView: React.FC = () => {
               <span className="text-[10px] text-slate-500">Par {survey.surveyorName}</span>
               <button
                 type="button"
-                onClick={() => {
-                  alert(`Cotes de ${survey.code} (${survey.widthClearMm}×${survey.heightClearMm}mm) copiées pour le chiffrage ! Vous pouvez ouvrir le configurateur.`)
-                }}
+                onClick={() => setSurveyToQuote(survey)}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 font-bold border border-sky-500/30 cursor-pointer transition-all"
               >
                 <span>Chiffrer Rideau</span>
@@ -373,6 +373,24 @@ export const SurveysView: React.FC = () => {
           </div>
         </CustomModal>
       )}
+
+      {/* Confirmation chiffrage des cotes de métré */}
+      <CustomConfirmModal
+        isOpen={!!surveyToQuote}
+        title={`Chiffrer le Rideau ${surveyToQuote?.code || ''}`}
+        message={`Cotes relevées : ${surveyToQuote?.widthClearMm} × ${surveyToQuote?.heightClearMm} mm (Passage utile ${(
+          ((surveyToQuote?.widthClearMm || 0) * (surveyToQuote?.heightClearMm || 0)) /
+          1000000
+        ).toFixed(2)} m²).\nClient : ${surveyToQuote?.clientName || ''}.\n\nVoulez-vous basculer vers les Devis & Commandes pour configurer ce rideau ?`}
+        confirmText="Ouvrir Devis & Commandes"
+        cancelText="Fermer"
+        variant="info"
+        onConfirm={() => {
+          setSurveyToQuote(null)
+          setCurrentView('orders')
+        }}
+        onClose={() => setSurveyToQuote(null)}
+      />
     </div>
   )
 }

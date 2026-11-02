@@ -6,6 +6,7 @@ import { formatDZD } from '../../utils/currency'
 import { CustomModal } from '../ui/CustomModal'
 import { CustomInput } from '../ui/CustomInput'
 import { CustomSelect } from '../ui/CustomSelect'
+import { CustomConfirmModal } from '../ui/CustomConfirmModal'
 import { Users, Plus, Phone, MapPin, Search, Edit2, Trash2, ArrowUpRight } from 'lucide-react'
 
 export const ClientsView: React.FC = () => {
@@ -18,6 +19,7 @@ export const ClientsView: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [selectedClientForDetails, setSelectedClientForDetails] = useState<Client | null>(null)
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null)
 
   // Form State
   const [fullName, setFullName] = useState('')
@@ -247,12 +249,9 @@ export const ClientsView: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      if (confirm(`Confirmez-vous la suppression de ${client.fullName} ?`)) {
-                        deleteClient(client.id)
-                      }
-                    }}
+                    onClick={() => setClientToDelete(client)}
                     className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg cursor-pointer transition-colors"
+                    title="Supprimer le client"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -440,6 +439,30 @@ export const ClientsView: React.FC = () => {
           </div>
         </CustomModal>
       )}
+
+      {/* DIALOGUE DE CONFIRMATION DE SUPPRESSION BESPOKE */}
+      <CustomConfirmModal
+        isOpen={clientToDelete !== null}
+        onClose={() => setClientToDelete(null)}
+        onConfirm={() => {
+          if (clientToDelete) {
+            deleteClient(clientToDelete.id)
+            setClientToDelete(null)
+          }
+        }}
+        title="Supprimer la fiche client"
+        message={
+          clientToDelete ? (
+            <span>
+              Êtes-vous sûr de vouloir supprimer définitivement le client{' '}
+              <strong className="text-slate-100">{clientToDelete.fullName}</strong> ({clientToDelete.code}) ? Cette action est irréversible.
+            </span>
+          ) : ''
+        }
+        confirmText="Supprimer définitivement"
+        cancelText="Annuler"
+        variant="danger"
+      />
     </div>
   )
 }

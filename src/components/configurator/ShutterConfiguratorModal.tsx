@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { CustomModal } from '../ui/CustomModal'
 import { CustomInput } from '../ui/CustomInput'
 import { CustomSelect } from '../ui/CustomSelect'
+import { CustomCheckbox } from '../ui/CustomCheckbox'
 import { ShutterPreview2D } from './ShutterPreview2D'
 import { SlatType, FinishType, ShutterAccessories, ShutterItem } from '../../types/shutter'
 import { calculateShutter, SLAT_CATALOG } from '../../utils/shutterMath'
@@ -410,91 +411,90 @@ export const ShutterConfiguratorModal: React.FC<ShutterConfiguratorModalProps> =
             </span>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-              <label
-                className={`flex items-center gap-2.5 p-2 rounded-xl border transition-colors cursor-pointer ${
+              <div
+                onClick={() =>
+                  setAccessories({ ...accessories, serrureCentrale: !accessories.serrureCentrale })
+                }
+                className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer select-none ${
                   accessories.serrureCentrale
-                    ? 'border-sky-500/40 bg-sky-500/10 text-slate-100'
-                    : 'border-slate-800 bg-[#0E131F] text-slate-400'
+                    ? 'border-sky-500/50 bg-sky-500/10 text-slate-100 shadow-sm shadow-sky-500/10'
+                    : 'border-slate-800 bg-[#0E131F] text-slate-400 hover:border-slate-700 hover:text-slate-300'
                 }`}
               >
-                <input
-                  type="checkbox"
+                <CustomCheckbox
                   checked={accessories.serrureCentrale}
-                  onChange={(e) =>
-                    setAccessories({ ...accessories, serrureCentrale: e.target.checked })
-                  }
-                  className="rounded border-slate-700 text-sky-500 cursor-pointer"
+                  onChange={(v) => setAccessories({ ...accessories, serrureCentrale: v })}
                 />
-                <span>Serrure Centrale</span>
-              </label>
+                <span className="font-medium text-xs">Serrure Centrale</span>
+              </div>
 
-              <label
-                className={`flex items-center gap-2.5 p-2 rounded-xl border transition-colors cursor-pointer ${
+              <div
+                onClick={() =>
+                  setAccessories({ ...accessories, sabotsSol: !accessories.sabotsSol })
+                }
+                className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer select-none ${
                   accessories.sabotsSol
-                    ? 'border-sky-500/40 bg-sky-500/10 text-slate-100'
-                    : 'border-slate-800 bg-[#0E131F] text-slate-400'
+                    ? 'border-sky-500/50 bg-sky-500/10 text-slate-100 shadow-sm shadow-sky-500/10'
+                    : 'border-slate-800 bg-[#0E131F] text-slate-400 hover:border-slate-700 hover:text-slate-300'
                 }`}
               >
-                <input
-                  type="checkbox"
+                <CustomCheckbox
                   checked={accessories.sabotsSol}
-                  onChange={(e) => setAccessories({ ...accessories, sabotsSol: e.target.checked })}
-                  className="rounded border-slate-700 text-sky-500 cursor-pointer"
+                  onChange={(v) => setAccessories({ ...accessories, sabotsSol: v })}
                 />
-                <span>Sabots de Sol</span>
-              </label>
+                <span className="font-medium text-xs">Sabots de Sol</span>
+              </div>
 
-              <label
-                className={`flex items-center gap-2.5 p-2 rounded-xl border transition-colors cursor-pointer ${
+              <div
+                onClick={() =>
+                  setAccessories({ ...accessories, deblocageSecours: !accessories.deblocageSecours })
+                }
+                className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer select-none ${
                   accessories.deblocageSecours
-                    ? 'border-sky-500/40 bg-sky-500/10 text-slate-100'
-                    : 'border-slate-800 bg-[#0E131F] text-slate-400'
+                    ? 'border-sky-500/50 bg-sky-500/10 text-slate-100 shadow-sm shadow-sky-500/10'
+                    : 'border-slate-800 bg-[#0E131F] text-slate-400 hover:border-slate-700 hover:text-slate-300'
                 }`}
               >
-                <input
-                  type="checkbox"
+                <CustomCheckbox
                   checked={accessories.deblocageSecours}
-                  onChange={(e) =>
-                    setAccessories({ ...accessories, deblocageSecours: e.target.checked })
-                  }
-                  className="rounded border-slate-700 text-sky-500 cursor-pointer"
+                  onChange={(v) => setAccessories({ ...accessories, deblocageSecours: v })}
                 />
-                <span>Débrayage Secours</span>
-              </label>
+                <span className="font-medium text-xs">Débrayage Secours</span>
+              </div>
 
-              <label
-                className={`flex items-center gap-2.5 p-2 rounded-xl border transition-colors cursor-pointer ${
+              <div
+                onClick={() =>
+                  setAccessories({ ...accessories, boiteCle: !accessories.boiteCle })
+                }
+                className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer select-none ${
                   accessories.boiteCle
-                    ? 'border-sky-500/40 bg-sky-500/10 text-slate-100'
-                    : 'border-slate-800 bg-[#0E131F] text-slate-400'
+                    ? 'border-sky-500/50 bg-sky-500/10 text-slate-100 shadow-sm shadow-sky-500/10'
+                    : 'border-slate-800 bg-[#0E131F] text-slate-400 hover:border-slate-700 hover:text-slate-300'
                 }`}
               >
-                <input
-                  type="checkbox"
+                <CustomCheckbox
                   checked={accessories.boiteCle}
-                  onChange={(e) => setAccessories({ ...accessories, boiteCle: e.target.checked })}
-                  className="rounded border-slate-700 text-sky-500 cursor-pointer"
+                  onChange={(v) => setAccessories({ ...accessories, boiteCle: v })}
                 />
-                <span>Boîte à Clé Extérieure</span>
-              </label>
+                <span className="font-medium text-xs">Boîte à Clé Extérieure</span>
+              </div>
 
-              <label
-                className={`flex items-center gap-2.5 p-2 rounded-xl border transition-colors cursor-pointer ${
+              <div
+                onClick={() =>
+                  setAccessories({ ...accessories, caissonCoffre: !accessories.caissonCoffre })
+                }
+                className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer select-none ${
                   accessories.caissonCoffre
-                    ? 'border-sky-500/40 bg-sky-500/10 text-slate-100'
-                    : 'border-slate-800 bg-[#0E131F] text-slate-400'
+                    ? 'border-sky-500/50 bg-sky-500/10 text-slate-100 shadow-sm shadow-sky-500/10'
+                    : 'border-slate-800 bg-[#0E131F] text-slate-400 hover:border-slate-700 hover:text-slate-300'
                 }`}
               >
-                <input
-                  type="checkbox"
+                <CustomCheckbox
                   checked={accessories.caissonCoffre}
-                  onChange={(e) =>
-                    setAccessories({ ...accessories, caissonCoffre: e.target.checked })
-                  }
-                  className="rounded border-slate-700 text-sky-500 cursor-pointer"
+                  onChange={(v) => setAccessories({ ...accessories, caissonCoffre: v })}
                 />
-                <span>Coffre d'Habillage</span>
-              </label>
+                <span className="font-medium text-xs">Coffre d'Habillage</span>
+              </div>
 
               <div className="flex items-center justify-between p-2 rounded-xl border border-slate-800 bg-[#0E131F]">
                 <span className="text-slate-400 text-xs">Télécommandes :</span>

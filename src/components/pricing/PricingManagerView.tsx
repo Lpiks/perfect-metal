@@ -25,6 +25,8 @@ import {
   BPC_COLOR_FAMILIES,
 } from '../../utils/bpcMasterCatalog'
 import { CustomModal } from '../ui/CustomModal'
+import { CustomConfirmModal } from '../ui/CustomConfirmModal'
+import { CustomSwitch } from '../ui/CustomSwitch'
 
 const TEXTURE_CONFIG: Record<
   BpcTexture,
@@ -98,6 +100,8 @@ export const PricingManagerView: React.FC = () => {
   // État du Modal "Cahier de Couleur BPC"
   const [isColorModalOpen, setIsColorModalOpen] = useState(false)
   const [editingColor, setEditingColor] = useState<BpcColor | null>(null)
+  const [colorToDelete, setColorToDelete] = useState<BpcColor | null>(null)
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false)
 
   // Filtres & sélection dans le Cahier Maître BPC
   const [bookletFamily, setBookletFamily] = useState<string>('Toutes les familles')
@@ -240,16 +244,7 @@ export const PricingManagerView: React.FC = () => {
         <div className="flex items-center gap-2.5">
           <button
             type="button"
-            onClick={() => {
-              if (
-                window.confirm(
-                  'Voulez-vous réinitialiser tous les prix et couleurs aux valeurs catalogue usine ?'
-                )
-              ) {
-                resetPricingToDefaults()
-                showSaveNotice('Tarifs et catalogue BPC réinitialisés aux valeurs usine.')
-              }
-            }}
+            onClick={() => setIsResetConfirmOpen(true)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-slate-800 transition-colors cursor-pointer"
             title="Réinitialiser tous les prix par défaut"
           >
@@ -465,14 +460,7 @@ export const PricingManagerView: React.FC = () => {
                       {/* Supprimer */}
                       <button
                         type="button"
-                        onClick={() => {
-                          if (
-                            window.confirm(`Supprimer la teinte ${color.code} du catalogue atelier ?`)
-                          ) {
-                            deleteBpcColor(color.id)
-                            showSaveNotice(`Teinte ${color.code} supprimée`)
-                          }
-                        }}
+                        onClick={() => setColorToDelete(color)}
                         className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-colors cursor-pointer"
                         title="Supprimer du catalogue"
                       >
@@ -877,19 +865,17 @@ export const PricingManagerView: React.FC = () => {
                 <label className="text-xs font-semibold text-slate-300 block mb-1">
                   3. Disponibilité en Poudre Atelier :
                 </label>
-                <label className="flex items-center gap-2.5 p-2 rounded-xl border border-slate-800 bg-[#0E1322] cursor-pointer hover:border-slate-700 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={formInStock}
-                    onChange={(e) => setFormInStock(e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-700 text-sky-500 cursor-pointer"
-                  />
-                  <span className="text-xs font-medium text-slate-200">
-                    {formInStock
-                      ? 'Poudre en Stock (Disponible immédiatement)'
-                      : 'Poudre Épuisée (À commander chez BPC Algérie)'}
-                  </span>
-                </label>
+                <CustomSwitch
+                  checked={formInStock}
+                  onChange={setFormInStock}
+                  label={formInStock ? 'Poudre en Stock Atelier' : 'Poudre Épuisée'}
+                  description={
+                    formInStock
+                      ? 'Disponible immédiatement pour fabrication'
+                      : 'À commander auprès de BPC Algérie'
+                  }
+                  size="sm"
+                />
               </div>
             </div>
           </div>
@@ -925,6 +911,51 @@ export const PricingManagerView: React.FC = () => {
           </div>
         </form>
       </CustomModal>
+
+      {/* DIALOGUE CONFIRMATION SUPPRESSION COULEUR BPC */}
+      <CustomConfirmModal
+        isOpen={colorToDelete !== null}
+        onClose={() => setColorToDelete(null)}
+        onConfirm={() => {
+          if (colorToDelete) {
+            deleteBpcColor(colorToDelete.id)
+            showSaveNotice(`Teinte ${colorToDelete.code} supprimée du catalogue`)
+            setColorToDelete(null)
+          }
+        }}
+        title="Supprimer la teinte du catalogue atelier"
+        message={
+          colorToDelete ? (
+            <span>
+              Voulez-vous vraiment retirer la teinte{' '}
+              <strong className="text-slate-100">{colorToDelete.code}</strong> ({colorToDelete.name}) du catalogue de votre atelier ?
+            </span>
+          ) : ''
+        }
+        confirmText="Supprimer de l'atelier"
+        cancelText="Annuler"
+        variant="danger"
+      />
+
+      {/* DIALOGUE CONFIRMATION RÉINITIALISATION USINE */}
+      <CustomConfirmModal
+        isOpen={isResetConfirmOpen}
+        onClose={() => setIsResetConfirmOpen(false)}
+        onConfirm={() => {
+          resetPricingToDefaults()
+          showSaveNotice('Tarifs et catalogue BPC réinitialisés aux valeurs usine.')
+          setIsResetConfirmOpen(false)
+        }}
+        title="Réinitialiser tous les tarifs & catalogue usine"
+        message={
+          <span>
+            Cette action va rétablir l'ensemble des prix des lames, moteurs et le nuancier officiel BPC Algérie aux valeurs de référence initiales.
+          </span>
+        }
+        confirmText="Confirmer la réinitialisation"
+        cancelText="Annuler"
+        variant="warning"
+      />
     </div>
   )
 }

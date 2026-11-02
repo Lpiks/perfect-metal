@@ -80,6 +80,17 @@
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(56, 189, 248, 0.4);
   }
+
+  /* ── Supprimer les flèches steppers par défaut des input number ── */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
 }
 
 /* ── Print Media Query pour Factures & Devis A4 ── */

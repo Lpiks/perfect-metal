@@ -8,6 +8,7 @@ import { WorkshopCuttingSheet } from '../production/WorkshopCuttingSheet'
 import { CustomModal } from '../ui/CustomModal'
 import { CustomInput } from '../ui/CustomInput'
 import { CustomSelect } from '../ui/CustomSelect'
+import { CustomConfirmModal } from '../ui/CustomConfirmModal'
 import {
   FileText,
   Printer,
@@ -31,6 +32,7 @@ export const OrdersView: React.FC = () => {
   // Modals de visualisation
   const [viewingOrderForDoc, setViewingOrderForDoc] = useState<Order | null>(null)
   const [viewingOrderForSheet, setViewingOrderForSheet] = useState<Order | null>(null)
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null)
 
   // Modal Enregistrement Règlement
   const [paymentModalOrder, setPaymentModalOrder] = useState<Order | null>(null)
@@ -326,12 +328,8 @@ export const OrdersView: React.FC = () => {
                           {/* Supprimer */}
                           <button
                             type="button"
-                            onClick={() => {
-                              if (confirm(`Confirmez-vous la suppression de ${order.code} ?`)) {
-                                deleteOrder(order.id)
-                              }
-                            }}
-                            title="Supprimer"
+                            onClick={() => setOrderToDelete(order)}
+                            title="Supprimer la commande"
                             className="p-1.5 rounded-lg hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 cursor-pointer transition-colors"
                           >
                             <Trash2 size={13} />
@@ -419,6 +417,31 @@ export const OrdersView: React.FC = () => {
           </div>
         </CustomModal>
       )}
+
+      {/* DIALOGUE DE SUPPRESSION COMMANDE BESPOKE */}
+      <CustomConfirmModal
+        isOpen={orderToDelete !== null}
+        onClose={() => setOrderToDelete(null)}
+        onConfirm={() => {
+          if (orderToDelete) {
+            deleteOrder(orderToDelete.id)
+            setOrderToDelete(null)
+          }
+        }}
+        title="Supprimer la commande"
+        message={
+          orderToDelete ? (
+            <span>
+              Êtes-vous sûr de vouloir supprimer définitivement la commande{' '}
+              <strong className="text-slate-100">{orderToDelete.code}</strong> pour le client{' '}
+              <strong className="text-slate-100">{orderToDelete.clientName}</strong> ?
+            </span>
+          ) : ''
+        }
+        confirmText="Supprimer définitivement"
+        cancelText="Annuler"
+        variant="danger"
+      />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useERPStore } from '../../store/erpStore'
 import { CustomInput } from '../ui/CustomInput'
+import { CustomConfirmModal } from '../ui/CustomConfirmModal'
 import {
   Download,
   Upload,
@@ -20,6 +21,21 @@ export const SettingsView: React.FC = () => {
   const [companyEmail, setCompanyEmail] = useState('contact@perfect-metal.dz')
   const [taxId, setTaxId] = useState('001916029384756')
   const [saveSuccess, setSaveSuccess] = useState(false)
+
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+    variant?: 'danger' | 'warning' | 'info' | 'success'
+    confirmText?: string
+    cancelText?: string
+    onConfirm: () => void
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  })
 
   const handleExportBackup = () => {
     const jsonStr = exportDataJson()
@@ -42,13 +58,29 @@ export const SettingsView: React.FC = () => {
       if (content) {
         const ok = importDataJson(content)
         if (ok) {
-          alert('Sauvegarde restaurée avec succès !')
+          setModalState({
+            isOpen: true,
+            title: 'Sauvegarde Restaurée avec Succès',
+            message: 'Toutes les données de l\'atelier ont été importées et restaurées dans la base locale avec succès.',
+            variant: 'success',
+            confirmText: 'D\'accord',
+            onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+          })
         } else {
-          alert('Erreur : Fichier de sauvegarde invalide.')
+          setModalState({
+            isOpen: true,
+            title: 'Fichier Invalide',
+            message: 'Le fichier sélectionné ne correspond pas à un format de sauvegarde valide pour PERFECT METAL.',
+            variant: 'danger',
+            confirmText: 'Fermer',
+            onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+          })
         }
       }
     }
     reader.readAsText(file)
+    // Reset file input
+    e.target.value = ''
   }
 
   const handleSaveCompany = () => {
@@ -116,9 +148,18 @@ export const SettingsView: React.FC = () => {
           <button
             type="button"
             onClick={() => {
-              if (confirm('Voulez-vous réinitialiser les données avec le jeu de démonstration réaliste ?')) {
-                resetToSampleData()
-              }
+              setModalState({
+                isOpen: true,
+                title: 'Réinitialiser le Jeu de Démo ?',
+                message: 'Cette action réinitialisera toutes les données de l\'atelier avec les exemples types d\'usine (clients, commandes, devis, stocks, fiches de débit). Vos modifications non sauvegardées seront remplacées.',
+                variant: 'warning',
+                confirmText: 'Oui, Réinitialiser',
+                cancelText: 'Annuler',
+                onConfirm: () => {
+                  resetToSampleData()
+                  setModalState(prev => ({ ...prev, isOpen: false }))
+                }
+              })
             }}
             className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-xl text-xs font-semibold border border-slate-800 cursor-pointer transition-all"
           >
@@ -184,6 +225,19 @@ export const SettingsView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Custom Confirm & Notification Modal */}
+      <CustomConfirmModal
+        isOpen={modalState.isOpen}
+        title={modalState.title}
+        message={modalState.message}
+        variant={modalState.variant}
+        confirmText={modalState.confirmText}
+        cancelText={modalState.cancelText}
+        isAlertOnly={!modalState.cancelText}
+        onConfirm={modalState.onConfirm}
+        onClose={() => setModalState(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   )
 }
